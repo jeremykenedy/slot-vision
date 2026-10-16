@@ -35,9 +35,24 @@
     }
   },
   "casino_environment": {
-    "source": "Original modeled rows of cabinets, columns and ceiling details",
-    "generator": "tools/build_cabinet.py",
+    "source": "Original modeled casino room: cabinet banks, upholstered chairs, columns, ceiling coves and tiered chandeliers",
+    "generator": [
+      "tools/build_casino.py",
+      "tools/build_cabinet.py"
+    ],
     "license": "Apache-2.0",
-    "materials": "Original symbol display grid and feathered contact shadow; same verified CC0 photographed wood floor as lounge"
+    "lighting": "Static CPU Cycles direct/indirect diffuse lighting baked to mesh colors with preserved albedos; champagne metal uses live PBR reflections; batched by nine materials",
+    "carpet": {
+      "source": "Original woven ornate casino carpet texture",
+      "file": "materials/casino_carpet.png",
+      "sha256": "603b7ad9c70fa488928dc5fd84e278ecf57d57291ecfb0279ab8c8559bb5b9b4"
+    },
+    "status": "Reviewed native API34 gallery; physical API30 cabinet jackpot29.52 and fullscreen30.00 actual presented buffers/s, seven app and five system settings restored"
+  },
+  "solid_surface_material": {
+    "source": "Original lit Filament solid surface material",
+    "generator": "tools/build_cabinet.py exports descriptors from garden_atrium.glb",
+    "compiler": "Filament matc1.77.3, mobile OpenGL",
+    "license": "Apache-2.0"
   }
 }

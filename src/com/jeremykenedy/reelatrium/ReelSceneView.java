@@ -78,6 +78,8 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
   private ReelRound previousRound;
   private CoinBurst coins;
   private MaterialInstance beacon;
+  private SolidMaterials solidMaterials;
+  private MaterialInstance[] activeMaterials = new MaterialInstance[0];
   private SwapChain swapChain;
   private String settingsSignature;
   private float speed;
@@ -97,6 +99,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     preferences = PreferenceManager.getDefaultSharedPreferences(context);
     engine = Engine.create(Engine.Backend.OPENGL);
     renderer = engine.createRenderer();
+    renderer.setFrameRateOptions(new Renderer.FrameRateOptions(.1f, .125f, 15, 2));
     scene = engine.createScene();
     view = engine.createView();
     cameraEntity = EntityManager.get().create();
@@ -189,6 +192,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     stop();
     uiHelper.detach();
     unloadModel();
+    solidMaterials.destroy();
     resourceLoader.destroy();
     assetLoader.destroy();
     materials.destroyMaterials();
@@ -214,7 +218,6 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     Choreographer.getInstance().postFrameCallback(this);
     if (!uiHelper.isReadyToRender() || swapChain == null) return;
     if (frameTimeNanos - lastFrameNanos < 30_000_000L) return;
-    lastFrameNanos = frameTimeNanos;
     if (asset != null) {
       resourceLoader.asyncUpdateLoad();
       int count;
@@ -227,8 +230,9 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
       }
       if (loading && resourceLoader.asyncGetLoadProgress() >= 1f) {
         loading = false;
+        activeMaterials = solidMaterials.apply(asset);
         applySeason(activeSeason);
-        for (MaterialInstance material : asset.getInstance().getMaterialInstances()) {
+        for (MaterialInstance material : activeMaterials) {
           String name = material.getName();
           if (name != null && name.startsWith("Trim") && coins == null)
             coins = new CoinBurst(engine, scene, material);
@@ -258,6 +262,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
           0);
     }
     if (renderer.beginFrame(swapChain, frameTimeNanos)) {
+      lastFrameNanos = frameTimeNanos;
       renderer.render(view);
       renderer.endFrame();
     }
@@ -279,6 +284,8 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     activeGame = selected[0];
     casino = "casino".equals(selected[5]);
     fullscreen = "fullscreen".equals(selected[6]);
+    uiHelper.setDesiredSize(1280, 720);
+    view.setPostProcessingEnabled(true);
     updateProjection();
     roundNumber = Long.MIN_VALUE;
     reelSectors = "garden".equals(selected[0]) ? 16 : 8;
@@ -304,6 +311,11 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
 
   private void loadEnvironment() {
     try {
+      solidMaterials =
+          new SolidMaterials(
+              engine,
+              readAsset("materials/solid-surfaces.filamat"),
+              readAsset("materials/solid-surfaces.json"));
       KTX1Loader.IndirectLightBundle environment =
           KTX1Loader.INSTANCE.createIndirectLight(
               engine, readAsset("ibl/atrium_ibl.ktx"), new KTX1Loader.Options());
@@ -348,6 +360,8 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     resourceLoader.asyncCancelLoad();
     scene.removeEntities(asset.getEntities());
     assetLoader.destroyAsset(asset);
+    solidMaterials.clear();
+    activeMaterials = new MaterialInstance[0];
     resourceLoader.evictResourceData();
     asset = null;
     if (seasonAtlas != null) {
@@ -392,7 +406,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     if (coins != null)
       coins.update(
           celebrationAge,
-          currentRound.jackpot() ? 64 : ReelRound.coinCount(currentRound.payout),
+          currentRound.celebrationCoinCount(),
           currentRound.celebrationDuration(),
           round,
           fullscreen);
@@ -401,7 +415,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
           currentRound.jackpot() && celebrationAge >= 0 && celebrationAge < 10
               ? Math.max(0f, (float) Math.sin(celebrationAge * 9))
               : 0f;
-      beacon.setParameter("emissiveFactor", pulse * 12000f, pulse * 180f, pulse * 80f);
+      beacon.setParameter("emissiveFactor", pulse * 12f, pulse * .04f, pulse * .01f);
     }
   }
 
@@ -433,7 +447,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     if (fullscreen) sampler.setWrapModeS(TextureSampler.WrapMode.CLAMP_TO_EDGE);
     if ("classic".equals(activeGame)) seasonAtlas = loadSeasonAtlas("classic");
     else if (fullscreen || !"atrium".equals(season)) seasonAtlas = loadSeasonAtlas(season);
-    for (MaterialInstance material : asset.getInstance().getMaterialInstances()) {
+    for (MaterialInstance material : activeMaterials) {
       String name = material.getName();
       if (name == null) continue;
       if (name.startsWith("ReelPaper") && seasonAtlas != null)

@@ -1,0 +1,11 @@
+{
+  "asset": "casino_carpet.png",
+  "license": "Apache-2.0",
+  "purpose": "Original tiling albedo for the casino room",
+  "prompt": "Use case: product-mockup. Asset type: seamless physically based base-color texture for a realistic upscale casino carpet, square 2048x2048. Flat orthographic top-down scan of tightly woven luxury commercial carpet. Deep midnight navy almost black base with elegant small-scale interlocking burgundy, muted antique-gold and dusty teal sweeping botanical curls and tapered ribbons, nuanced dense multicolor yarn weave. Rich refined actual casino textile rather than cartoon floor, sparse ornate motifs with varied continuous curved flow. Uniform diffuse lighting, tileable on all four edges, no highlights or shadows, no perspective, no room, no floorboards, no chips, coins, symbols, lettering, signs, logos or watermarks. Fine material detail should be visible up close and resolve into sophisticated dark texture from a distant view; avoid bright yellow outlines or geometric grid.",
+  "actual_dimensions": [
+    1254,
+    1254
+  ],
+  "sha256": "603b7ad9c70fa488928dc5fd84e278ecf57d57291ecfb0279ab8c8559bb5b9b4"
+}
