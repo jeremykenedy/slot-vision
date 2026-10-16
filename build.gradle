@@ -1,0 +1,45 @@
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'com.diffplug.spotless' version '8.10.3'
+}
+
+repositories { mavenCentral() }
+
+dependencies { testImplementation 'junit:junit:4.13.2' }
+
+java { sourceCompatibility = JavaVersion.VERSION_1_8; targetCompatibility = JavaVersion.VERSION_1_8 }
+
+sourceSets {
+    main.java {
+        srcDirs = ['src/com/jeremykenedy/reelatrium']
+        include 'ReelOptions.java', 'ReelRound.java'
+    }
+    test.java { srcDirs = ['tests'] }
+}
+
+spotless {
+    java {
+        target 'src/**/*.java', 'tests/**/*.java', 'coverage-tests/**/*.java'
+        googleJavaFormat('1.24.0')
+    }
+}
+
+layout.buildDirectory = layout.projectDirectory.dir('build/coverage-gradle')
+
+test { useJUnit(); finalizedBy jacocoTestReport }
+
+jacocoTestReport { reports { xml.required = true; html.required = true } }
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            element = 'BUNDLE'
+            limit { counter = 'LINE'; value = 'COVEREDRATIO'; minimum = 1.0 }
+            limit { counter = 'BRANCH'; value = 'COVEREDRATIO'; minimum = 1.0 }
+        }
+    }
+}
+
+check.dependsOn jacocoTestCoverageVerification
+check.dependsOn spotlessCheck

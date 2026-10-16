@@ -1,0 +1,17 @@
+name: Device testing
+description: Report native screensaver behavior on a TV or emulator.
+title: "Device test: "
+body:
+  - type: input
+    id: model
+    attributes:
+      label: Model, OS/API and resolution
+    validations:
+      required: true
+  - type: textarea
+    id: results
+    attributes:
+      label: Results
+      description: Include app version, preview and idle startup, remote exit, settings, sleep/wake, frame pacing and any visual defects. Remove personal device identifiers.
+    validations:
+      required: true

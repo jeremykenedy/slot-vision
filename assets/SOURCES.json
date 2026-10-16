@@ -1,0 +1,43 @@
+{
+  "cabinet": {
+    "source": "Original modeled scene",
+    "generator": "tools/build_cabinet.py",
+    "license": "Apache-2.0",
+    "coordinates": "glTF meters; Y up; front +Z; Reel_i local X axle"
+  },
+  "reel_symbols": {
+    "source": "Original modeled and rendered symbols",
+    "generator": "tools/build_symbols.py",
+    "license": "Apache-2.0",
+    "traditional_symbols": "Original beveled BAR, double BAR, triple BAR and red7 models; lettering is intentionally requested game artwork"
+  },
+  "studio_lighting": {
+    "title": "Studio Small 09",
+    "author": "Sergej Majboroda",
+    "source": "https://polyhaven.com/a/studio_small_09",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "download": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_09_1k.hdr",
+    "source_sha256": "e7cfda5f4e98e623db12b8bfd0184e048488e4855d9c83e2751fb44a32e80c45",
+    "conversion": "Filament cmgen 1.77.3; KTX1; 256-pixel cubemap; specular mip chain and spherical harmonics"
+  },
+  "floor_material": {
+    "title": "Wood Floor",
+    "authors": {
+      "Dimitrios Savva": "All"
+    },
+    "source": "https://polyhaven.com/a/wood_floor",
+    "license": "CC0-1.0",
+    "license_url": "https://polyhaven.com/license",
+    "files": {
+      "wood_floor_diff.jpg": "2a1c07687b6dbb214c4b9213739c6d92d425f1f0fc8ab3ac157f105d78240789",
+      "wood_floor_normal.jpg": "452247f0d0d1b7fc7f8324ff3b6ed60bcc6de1405f4284eeb8d9bce90d4939c2"
+    }
+  },
+  "casino_environment": {
+    "source": "Original modeled rows of cabinets, columns and ceiling details",
+    "generator": "tools/build_cabinet.py",
+    "license": "Apache-2.0",
+    "materials": "Original symbol display grid and feathered contact shadow; same verified CC0 photographed wood floor as lounge"
+  }
+}

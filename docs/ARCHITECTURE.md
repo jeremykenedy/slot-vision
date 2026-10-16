@@ -1,0 +1,9 @@
+# Architecture
+
+`ReelAtriumDreamService` and `PreviewActivity` own a native `SurfaceView`. `ReelSceneView` owns the Filament engine, glTF asset loader, scene, camera and frame callback. Original cabinet models contain curved reel cylinders, rounded metal and enamel parts, a lever, buttons and a recessed window. Bundled material textures and an image based lighting map provide surface detail and reflections. The scene uses OpenGL ES 3 through Filament 1.77.3.
+
+Three geometry assets provide classic three reel, palace five reel and garden five row layouts. Five original symbol atlases supply the default and seasonal themes. Assets load asynchronously, then ready renderables enter the scene. Seasonal textures replace the embedded atlas after resource loading finishes. Each reel rotates about its modeled axle. Synchronized rounds settle on integer symbol positions, then calculate visible payline matches. Gold coin bursts scale with the simulated payout and use one hardware instanced draw. The perspective camera keeps orbiting during outcome holds and changes its target independently so cabinet edges move.
+
+`ReelOptions` defines validated settings. `ReelRound` defines simulated outcomes, payline awards and smooth reel stops. Android preferences, the exported settings provider and the remote friendly settings activity use that contract. No wagers or gameplay accounting exist.
+
+Leaving preview or stopping the dream removes the frame callback. Destroying either owner releases the surface, models, textures, materials, lighting and engine. The app requests no permissions and uses no network client, background service or wake lock. Renderer quality is measured on the target TV before release; emulator performance is recorded separately.

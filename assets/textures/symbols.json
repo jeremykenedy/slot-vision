@@ -1,0 +1,69 @@
+{
+  "width": 512,
+  "height": 4096,
+  "cell_size": 512,
+  "index_zero": "bottom, UV v=0..0.125",
+  "symbols": {
+    "classic": [
+      "cherries",
+      "bell",
+      "bar",
+      "double_bar",
+      "triple_bar",
+      "seven",
+      "horseshoe",
+      "diamond"
+    ],
+    "atrium": [
+      "cherries",
+      "bell",
+      "diamond",
+      "ruby",
+      "plum",
+      "horseshoe",
+      "star",
+      "orange"
+    ],
+    "spring": [
+      "flower",
+      "sprig",
+      "tulip",
+      "butterfly",
+      "blossom",
+      "cherries",
+      "diamond",
+      "bell"
+    ],
+    "summer": [
+      "sun",
+      "shell",
+      "citrus",
+      "palm",
+      "starfish",
+      "cherries",
+      "orange",
+      "diamond"
+    ],
+    "autumn": [
+      "pumpkin",
+      "maple",
+      "acorn",
+      "mushroom",
+      "pear",
+      "bell",
+      "ruby",
+      "plum"
+    ],
+    "winter": [
+      "snowflake",
+      "ornament",
+      "gift",
+      "holly",
+      "mitten",
+      "diamond",
+      "bell",
+      "star"
+    ]
+  },
+  "art": "Original procedural 3D symbol models rendered with Blender Cycles; Traditional BAR lettering and 7 are intentional game symbols; no logos or watermarks."
+}

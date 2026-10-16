@@ -1,0 +1,77 @@
+[
+  {
+    "file": "filament-LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/google/filament/v1.77.3/LICENSE",
+    "sha256": "02d70b593dd8e9355dd8e1ca8d13c303bee5bcaf3065b66ff6e4f534e1e6a2c1"
+  },
+  {
+    "file": "filament-third_party_abseil_LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/google/filament/v1.77.3/third_party/abseil/LICENSE",
+    "sha256": "c79a7fea0e3cac04cd43f20e7b648e5a0ff8fa5344e644b0ee09ca1162b62747"
+  },
+  {
+    "file": "filament-third_party_basisu_LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/google/filament/v1.77.3/third_party/basisu/LICENSE",
+    "sha256": "065fcf48d6af21c0b75e23be5ed5753aee75c892e1c2cf178fa6736305614a5c"
+  },
+  {
+    "file": "filament-third_party_basisu_zstd_LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/google/filament/v1.77.3/third_party/basisu/zstd/LICENSE",
+    "sha256": "2c1a7fa704df8f3a606f6fc010b8b5aaebf403f3aeec339a12048f1ba7331a0b"
+  },
+  {
+    "file": "filament-third_party_cgltf_LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/google/filament/v1.77.3/third_party/cgltf/LICENSE",
+    "sha256": "f619925f80ef862497aaf8e8155ef218fa6a2190055129523ca3df9119a9ba95"
+  },
+  {
+    "file": "filament-third_party_draco_LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/google/filament/v1.77.3/third_party/draco/LICENSE",
+    "sha256": "d3709b0fb4b8a94bbb1d02b8a2e484f258b0d9c5c5a01f940391f3fe662cd1a4"
+  },
+  {
+    "file": "filament-third_party_meshoptimizer_LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/google/filament/v1.77.3/third_party/meshoptimizer/LICENSE",
+    "sha256": "063805e3b8e24ceab4c5dea358b03245ee41c31be87cf65c61d836636cb494bb"
+  },
+  {
+    "file": "filament-third_party_robin-map_LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/google/filament/v1.77.3/third_party/robin-map/LICENSE",
+    "sha256": "11f2c685ba565a31aef1219f63a7a8845602c97bff70016b9e3278dfe51a2ec5"
+  },
+  {
+    "file": "filament-third_party_libwebp_COPYING.txt",
+    "source": "https://raw.githubusercontent.com/google/filament/v1.77.3/third_party/libwebp/COPYING",
+    "sha256": "5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf"
+  },
+  {
+    "file": "filament-third_party_libz_LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/google/filament/v1.77.3/third_party/libz/LICENSE",
+    "sha256": "845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243"
+  },
+  {
+    "file": "filament-third_party_smol-v_LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/google/filament/v1.77.3/third_party/smol-v/LICENSE",
+    "sha256": "9cea538cc1ee6680f4d13e212bfef5b581cd5d873cbedf6dc07699dbe7e69651"
+  },
+  {
+    "file": "filament-stb-LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/google/filament/v1.77.3/third_party/stb/stb_image.h",
+    "note": "Unmodified trailing license block"
+  },
+  {
+    "file": "kotlin-LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/JetBrains/kotlin/v2.4.0/license/LICENSE.txt",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  {
+    "file": "kotlin-NOTICE.txt",
+    "source": "https://raw.githubusercontent.com/JetBrains/kotlin/v2.4.0/license/NOTICE.txt",
+    "sha256": "0b09a83d3ef7795c7dec65e815866597c066c53898f2852a76599b8f5552941a"
+  },
+  {
+    "file": "coroutines-LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/Kotlin/kotlinx.coroutines/1.11.0/LICENSE.txt",
+    "sha256": "b1febe6399dffb10d19d35e7663ab16300c93cb0476a94115df1cc0097a8ffd8"
+  }
+]

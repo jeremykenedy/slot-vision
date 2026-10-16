@@ -1,0 +1,15 @@
+Reel Atrium
+Copyright 2026 Jeremy Kenedy
+
+Android build scaffolding adapted from Pipeworks Dream, Copyright 2026 Jeremy Kenedy.
+Cabinet models and reel symbol artwork are original project assets.
+
+This application redistributes Google Filament 1.77.3 and portions of
+Kotlin Standard Library 2.4.0 and kotlinx.coroutines 1.11.0 under the
+Apache License, Version 2.0.
+Copyright and license texts for these libraries and their native dependencies
+are preserved in assets/licenses and included in the APK.
+
+Studio Small 09 lighting by Sergej Majboroda and Wood Floor photographs by
+Dimitrios Savva are CC0 assets from Poly Haven. Sources, conversions and
+original file checksums are recorded in assets/SOURCES.json.

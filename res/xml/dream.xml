@@ -1,0 +1,3 @@
+<dream xmlns:android="http://schemas.android.com/apk/res/android"
+    android:previewImage="@drawable/screensaver_preview"
+    android:settingsActivity="com.jeremykenedy.reelatrium.SettingsActivity" />
