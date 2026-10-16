@@ -1,0 +1,19 @@
+material {
+    name : "Cabinet solid surfaces",
+    shadingModel : lit,
+    parameters : [
+        { type : float4, name : baseColorFactor },
+        { type : float, name : metallicFactor },
+        { type : float, name : roughnessFactor },
+        { type : float3, name : emissiveFactor }
+    ]
+}
+fragment {
+    void material(inout MaterialInputs material) {
+        prepareMaterial(material);
+        material.baseColor = materialParams.baseColorFactor;
+        material.metallic = materialParams.metallicFactor;
+        material.roughness = materialParams.roughnessFactor;
+        material.emissive = vec4(materialParams.emissiveFactor, 0.0);
+    }
+}

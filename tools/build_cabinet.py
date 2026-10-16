@@ -539,6 +539,32 @@ sphere("Beacon crown", (0, 0.02, 1.825), 0.051, beacon_mat).scale = (1, 1, 0.30)
 cylinder("Beacon silver band", (0, 0.02, 1.754), 0.053, 0.006, chrome)
 
 
+# Cabinet pieces are static; retain only reels and environment switches as separate nodes.
+if not args.fullscreen:
+    groups = {}
+    for obj in list(bpy.data.objects):
+        if (
+            obj.name.startswith(("Reel_", "Printed reel ", "Lounge_", "Casino_"))
+            or obj.name == "Protective reel glass"
+        ):
+            continue
+        if obj.type == "CURVE":
+            bpy.ops.object.select_all(action="DESELECT")
+            bpy.context.view_layer.objects.active = obj
+            obj.select_set(True)
+            bpy.ops.object.convert(target="MESH")
+            obj.select_set(False)
+        if obj.type == "MESH":
+            groups.setdefault(obj.data.materials[0].name, []).append(obj)
+    for name, members in groups.items():
+        bpy.ops.object.select_all(action="DESELECT")
+        for obj in members:
+            obj.select_set(True)
+        bpy.context.view_layer.objects.active = members[0]
+        bpy.ops.object.join()
+        bpy.context.object.name = "Cabinet_" + name
+
+
 # Camera and area lights are used for offline geometry inspection only.
 def aim(obj, target):
     obj.rotation_euler = (
@@ -665,6 +691,30 @@ for entry in model.get("materials", []):
 model["extensionsUsed"] = sorted(
     set(model.get("extensionsUsed", []) + ["KHR_materials_unlit"])
 )
+if args.game == "garden" and args.season == "atrium" and not args.fullscreen:
+    solid_surfaces = {}
+    for entry in model["materials"]:
+        pbr = entry.get("pbrMetallicRoughness", {})
+        extensions = entry.get("extensions", {})
+        if (
+            entry.get("alphaMode", "OPAQUE") != "OPAQUE"
+            or "baseColorTexture" in pbr
+            or "KHR_materials_unlit" in extensions
+        ):
+            continue
+        strength = extensions.get("KHR_materials_emissive_strength", {}).get(
+            "emissiveStrength", 1
+        )
+        solid_surfaces[entry["name"]] = {
+            "color": pbr.get("baseColorFactor", [1, 1, 1, 1]),
+            "metal": pbr.get("metallicFactor", 1),
+            "roughness": pbr.get("roughnessFactor", 1),
+            "emission": [value * strength for value in entry.get("emissiveFactor", [0, 0, 0])],
+        }
+    (ROOT / "assets/materials/solid-surfaces.json").write_text(
+        json.dumps(solid_surfaces, indent=2) + "\n"
+    )
+
 encoded = json.dumps(model, separators=(",", ":")).encode()
 encoded += b" " * ((-len(encoded)) % 4)
 remaining = raw[20 + json_size :]

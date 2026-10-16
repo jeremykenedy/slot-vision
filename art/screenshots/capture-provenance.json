@@ -1,0 +1,96 @@
+{
+  "apk_sha256": "b1989a2ad94409fb952db95867a1c53d193b076f98ba507e7aa9cc4bb078b40e",
+  "device": "Google TV API34 emulator-5580",
+  "display": "1920x1080",
+  "internal_render": "1280x720",
+  "captures": [
+    {
+      "file": "casino-classic.png",
+      "settings": {
+        "game": "classic",
+        "season": "atrium",
+        "view": "cabinet",
+        "background": "casino",
+        "speed": "natural",
+        "brightness": "cinematic",
+        "camera": "gentle"
+      },
+      "settle_seconds": 8
+    },
+    {
+      "file": "casino-palace.png",
+      "settings": {
+        "game": "palace",
+        "season": "autumn",
+        "view": "cabinet",
+        "background": "casino",
+        "speed": "natural",
+        "brightness": "cinematic",
+        "camera": "gentle"
+      },
+      "settle_seconds": 18
+    },
+    {
+      "file": "casino-garden.png",
+      "settings": {
+        "game": "garden",
+        "season": "spring",
+        "view": "cabinet",
+        "background": "casino",
+        "speed": "natural",
+        "brightness": "cinematic",
+        "camera": "gentle"
+      },
+      "settle_seconds": 18
+    },
+    {
+      "file": "fullscreen-classic.png",
+      "settings": {
+        "game": "classic",
+        "season": "atrium",
+        "view": "fullscreen",
+        "background": "casino",
+        "speed": "natural",
+        "brightness": "cinematic",
+        "camera": "gentle"
+      },
+      "settle_seconds": 8
+    },
+    {
+      "file": "fullscreen-palace.png",
+      "settings": {
+        "game": "palace",
+        "season": "summer",
+        "view": "fullscreen",
+        "background": "casino",
+        "speed": "natural",
+        "brightness": "cinematic",
+        "camera": "gentle"
+      },
+      "settle_seconds": 18
+    },
+    {
+      "file": "fullscreen-garden.png",
+      "settings": {
+        "game": "garden",
+        "season": "winter",
+        "view": "fullscreen",
+        "background": "casino",
+        "speed": "natural",
+        "brightness": "cinematic",
+        "camera": "gentle"
+      },
+      "settle_seconds": 18
+    }
+  ],
+  "settings_capture": "settings-androidtv.png",
+  "files": {
+    "casino-garden-androidtv.png": "99018ec2ed34a35878c1bae776bdc8f14d3982f83ba0539a4d8c24a6962eaf5c",
+    "casino-palace-androidtv.png": "888c02e05ab9b6d1155b89cf50e65f7f0f6fbf79d14acd313b218126e7bb6d93",
+    "settings-androidtv.png": "985f7e4ee88208d79b4259eda7170c88b1270706a66c69e0fadf50c69db834c1",
+    "fullscreen-classic-androidtv.png": "66b17a986b93243e16ad283409ba38071e2298bfce47da23f684797a4c8dd1ae",
+    "fullscreen-garden-androidtv.png": "fe0dc313af6fc0146829647ee931e928669461f6605f4b108b36c7f119abb557",
+    "fullscreen-palace-androidtv.png": "f53b0d57d592517b8476a5e488954c445bdd33530c5959c760d6916956e9a321",
+    "casino-classic-androidtv.png": "7ed36dfe88e85d04e809505a62b2008cb3ae2f7a1325b614652a54550126c95d"
+  }
+}

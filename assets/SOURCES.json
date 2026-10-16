@@ -47,6 +47,12 @@
       "file": "materials/casino_carpet.png",
       "sha256": "603b7ad9c70fa488928dc5fd84e278ecf57d57291ecfb0279ab8c8559bb5b9b4"
     },
-    "status": "Native API34 full-size casino capture reviewed; final jackpot revision and physical performance pending"
+    "status": "Reviewed native API34 gallery; physical API30 cabinet jackpot29.52 and fullscreen30.00 actual presented buffers/s, seven app and five system settings restored"
+  },
+  "solid_surface_material": {
+    "source": "Original lit Filament solid surface material",
+    "generator": "tools/build_cabinet.py exports descriptors from garden_atrium.glb",
+    "compiler": "Filament matc1.77.3, mobile OpenGL",
+    "license": "Apache-2.0"
   }
 }

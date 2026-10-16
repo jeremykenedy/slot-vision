@@ -63,7 +63,7 @@ firetv-screensavers --install=slot-vision --yes
 firetv-set-screensaver --set=slot-vision --yes
 ```
 
-To update, repeat `firetv-screensavers --install=slot-vision --yes`. To remove, choose another saver first, then run `firetv-screensavers --uninstall=slot-vision --yes --force`. Fire TV UI discovers the installed DreamService and opens its settings; it does not download APKs from GitHub. These commands require a Toolkit release containing the Slot Vision entry.
+To update, repeat `firetv-screensavers --install=slot-vision --yes`. To remove, choose another saver first, then run `firetv-screensavers --uninstall=slot-vision --yes --force`. Fire TV UI discovers the installed DreamService and opens its settings. Its Install screensavers catalog can install a published APK after the host catalog is updated with the verified release. These commands require a Toolkit release containing the Slot Vision entry.
 
 ## Quick start
 
@@ -121,19 +121,24 @@ Host tests enforce 100% line and branch coverage for `ReelOptions`, `ReelRound` 
 - [Release notes](docs/releases/v1.0.0.md)
 - [Changelog](CHANGELOG.md)
 
+Host developers: [integration contract](docs/INTEGRATION.md).
+
 ## Screenshots
 
 Captured from the current native app on the API 34 Google TV emulator. The display captures are 1920x1080; the renderer uses a 1280x720 surface. Scenes are not retouched.
 
 <table>
   <tr>
-    <td><img src="art/screenshots/classic-androidtv.png" alt="Classic dimensional cabinet with traditional BAR and 7 reel symbols"></td>
-    <td><img src="art/screenshots/winter-garden-androidtv.png" alt="Five row winter garden with seasonal symbols and chrome trim"></td>
-    <td><img src="art/screenshots/casino-androidtv.png" alt="Classic cabinet surrounded by modeled casino machines, upholstered chairs and chandeliers"></td>
+    <td><img src="art/screenshots/casino-classic-androidtv.png" alt="Classic cabinet in the casino with traditional 777 jackpot and animated coins"></td>
+    <td><img src="art/screenshots/casino-palace-androidtv.png" alt="Five reel palace cabinet in the casino with autumn artwork"></td>
+    <td><img src="art/screenshots/casino-garden-androidtv.png" alt="Five row garden cabinet with spring artwork"></td>
   </tr>
   <tr>
-    <td><img src="art/screenshots/palace-spring-androidtv.png" alt="Five reel palace with spring symbols and rose colored trim"></td>
-    <td><img src="art/screenshots/fullscreen-androidtv.png" alt="Fullscreen traditional reels with winning 777 and the expanded gold coin fountain"></td>
+    <td><img src="art/screenshots/fullscreen-classic-androidtv.png" alt="Fullscreen traditional 777 reels and jackpot coin shower"></td>
+    <td><img src="art/screenshots/fullscreen-palace-androidtv.png" alt="Fullscreen five reel palace with summer artwork"></td>
+    <td><img src="art/screenshots/fullscreen-garden-androidtv.png" alt="Fullscreen five row garden with winter artwork"></td>
+  </tr>
+  <tr>
     <td><img src="art/screenshots/settings-androidtv.png" alt="Native remote settings with all seven appearance controls"></td>
   </tr>
 </table>
