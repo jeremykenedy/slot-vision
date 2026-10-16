@@ -15,7 +15,7 @@
 
 Show some love by starring this repository on GitHub.
 
-The first public APK release is pending final Fire TV verification. The source, build steps and current [device evidence](docs/VERIFICATION.md) are available here.
+The signed APK is available from [Releases](https://github.com/jeremykenedy/slot-vision/releases). The [device evidence](docs/VERIFICATION.md) records physical Fire TV playback and the remaining untested platforms.
 
 ## Table of contents
 
