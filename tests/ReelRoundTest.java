@@ -25,6 +25,7 @@ public final class ReelRoundTest {
   public void everyWinHasCoinsAndLargerPayoutsHaveLargerBoundedBursts() {
     ReelRound jackpot = new ReelRound(1, 0, 3, 3);
     assertTrue(jackpot.jackpot());
+    assertEquals(192, jackpot.celebrationCoinCount());
     assertTrue(new ReelRound(1, 0, 3, 3).payout > 0);
     assertEquals(100, ReelRound.payout(jackpot.stops, 3));
     assertEquals(0, ReelRound.coinCount(0));
@@ -53,6 +54,7 @@ public final class ReelRoundTest {
         assertEquals(0, current.celebrationDuration(), 0);
         loss = true;
       } else if (!current.jackpot()) {
+        assertEquals(ReelRound.coinCount(current.payout), current.celebrationCoinCount());
         assertTrue(current.celebrationDuration() >= 1.5);
         assertTrue(current.celebrationDuration() <= 6);
         smallWin |= current.celebrationDuration() < 6;

@@ -57,6 +57,10 @@ public final class ReelRound {
     return payout <= 0 ? 0 : Math.min(64, 4 + (int) Math.ceil(Math.sqrt(payout) * 3));
   }
 
+  public int celebrationCoinCount() {
+    return jackpot() ? 192 : coinCount(payout);
+  }
+
   public double celebrationDuration() {
     return payout <= 0 ? 0 : jackpot() ? 10 : Math.min(6, 1.5 + Math.sqrt(payout) * .12);
   }

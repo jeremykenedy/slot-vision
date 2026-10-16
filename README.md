@@ -129,11 +129,11 @@ Captured from the current native app on the API 34 Google TV emulator. The displ
   <tr>
     <td><img src="art/screenshots/classic-androidtv.png" alt="Classic dimensional cabinet with traditional BAR and 7 reel symbols"></td>
     <td><img src="art/screenshots/winter-garden-androidtv.png" alt="Five row winter garden with seasonal symbols and chrome trim"></td>
-    <td><img src="art/screenshots/casino-androidtv.png" alt="Classic cabinet surrounded by casino machines and reflective columns"></td>
+    <td><img src="art/screenshots/casino-androidtv.png" alt="Classic cabinet surrounded by modeled casino machines, upholstered chairs and chandeliers"></td>
   </tr>
   <tr>
     <td><img src="art/screenshots/palace-spring-androidtv.png" alt="Five reel palace with spring symbols and rose colored trim"></td>
-    <td><img src="art/screenshots/fullscreen-androidtv.png" alt="Fullscreen traditional reels with winning 777 and a gold coin shower"></td>
+    <td><img src="art/screenshots/fullscreen-androidtv.png" alt="Fullscreen traditional reels with winning 777 and the expanded gold coin fountain"></td>
     <td><img src="art/screenshots/settings-androidtv.png" alt="Native remote settings with all seven appearance controls"></td>
   </tr>
 </table>

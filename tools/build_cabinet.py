@@ -506,90 +506,11 @@ for obj in lounge_objects:
     obj.name = "Lounge_" + obj.name
 
 casino_start = set(bpy.data.objects)
-carpet = floor_mat.copy()
-carpet.name = "Casino floor"
-wall = material("Casino wall", (0.012, 0.018, 0.028), 0, 0.8)
-blue_screen = material("Casino blue screen", (0.008, 0.09, 0.21), 0, 0.45, 0.8)
-red_screen = material("Casino reel display", (0.75, 0.75, 0.75), 0, 0.45, 0.1)
-screen_image = red_screen.node_tree.nodes.new("ShaderNodeTexImage")
-screen_image.image = bpy.data.images.load(
-    str(ROOT / "assets/textures/casino_screen.png")
-)
-red_screen.node_tree.links.new(
-    screen_image.outputs["Color"],
-    red_screen.node_tree.nodes.get("Principled BSDF").inputs["Base Color"],
-)
-casino_gold = material("Casino gold light", (0.42, 0.20, 0.035), 0.8, 0.32, 0.3)
-box("Carpet", (0, 0, -0.023), (10, 14, 0.025), carpet, 0.001)
-box("Rear wall", (0, 5.7, 2), (12, 0.15, 4), wall, 0.02)
-for side in (-1, 1):
-    box("Side wall", (side * 4.8, 2.1, 2), (0.15, 9, 4), wall, 0.02)
-    for row in range(4):
-        x, y = side * (1.65 + 0.34 * row), 0.75 + row * 0.93
-        box("Neighbor cabinet", (x, y, 0.78), (0.66, 0.58, 1.48), cabinet, 0.035)
-        box("Neighbor bezel", (x, y - 0.306, 1.02), (0.58, 0.045, 0.83), trim, 0.018)
-        display = box(
-            "Neighbor screen",
-            (x, y - 0.334, 1.02),
-            (0.49, 0.018, 0.73),
-            red_screen,
-            0.006,
-        )
-        uv = display.data.uv_layers.active
-        for polygon in display.data.polygons:
-            for loop in polygon.loop_indices:
-                vertex = display.data.vertices[display.data.loops[loop].vertex_index].co
-                uv.data[loop].uv = (vertex.x / 0.49 + 0.5, vertex.z / 0.73 + 0.5)
-        box("Neighbor deck", (x, y - 0.36, 0.52), (0.59, 0.22, 0.065), chrome, 0.012)
-        for button in range(3):
-            cylinder(
-                "Neighbor button",
-                (x + (button - 1) * 0.13, y - 0.40, 0.565),
-                0.026,
-                0.012,
-                accent,
-            )
-        box("Neighbor plinth", (x, y, 0.09), (0.72, 0.65, 0.10), black, 0.016)
-        box(
-            "Neighbor crown",
-            (x, y - 0.30, 1.57),
-            (0.61, 0.04, 0.11),
-            casino_gold,
-            0.015,
-        )
-    for z in (2.18, 2.30):
-        tube("Ceiling cove", [(side * 0.72, 0, z), (side * 3.9, 5, z)], 0.012, warm)
-    for y in (1.6, 3.5, 5.1):
-        cylinder("Column", (side * 3.3, y, 1.5), 0.14, 3, trim)
-        cylinder("Column collar", (side * 3.3, y, 2.76), 0.19, 0.07, casino_gold)
-for row in range(6):
-    y = 0.25 + row * 0.8
-    for side in (-1, 1):
-        tube(
-            "Carpet inlay",
-            [
-                (side * 0.72, y, 0.0),
-                (side * 1.10, y + 0.18, 0.0),
-                (side * 0.72, y + 0.36, 0.0),
-            ],
-            0.004,
-            casino_gold,
-        )
-contact_shadow(0, 0, 1.35, 1.3)
-for side in (-1, 1):
-    for row in range(4):
-        contact_shadow(side * (1.65 + 0.34 * row), 0.75 + row * 0.93)
+casino_source = ROOT / "build/casino_environment.glb"
+if not casino_source.exists():
+    raise RuntimeError("Run tools/build_casino.py in Blender before building cabinet models")
+bpy.ops.import_scene.gltf(filepath=str(casino_source))
 casino_objects = set(bpy.data.objects) - casino_start
-casino_materials = {}
-for obj in casino_objects:
-    obj.name = "Casino_" + obj.name
-    if hasattr(obj.data, "materials"):
-        for index, original in enumerate(obj.data.materials):
-            if original.name not in casino_materials:
-                duplicate = original.copy()
-                duplicate.name = "Casino " + original.name
-                casino_materials[original.name] = duplicate
-            obj.data.materials[index] = casino_materials[original.name]
 
 # One static renderable per material keeps rows of scenery inexpensive on TV GPUs.
 for label, objects in (("Lounge", lounge_objects), ("Casino", casino_objects)):
@@ -705,16 +626,37 @@ import struct
 raw = destination.read_bytes()
 json_size = struct.unpack_from("<I", raw, 12)[0]
 model = json.loads(raw[20 : 20 + json_size])
+for mesh in model.get("meshes", []):
+    for primitive in mesh["primitives"]:
+        attributes = primitive["attributes"]
+        surface = model["materials"][primitive["material"]]
+        if surface.get("name", "").startswith("Casino ") and "COLOR_1" in attributes:
+            attributes["COLOR_0"] = attributes.pop("COLOR_1")
+        if surface.get("name") == "Casino Brushed champagne bronze":
+            attributes.pop("COLOR_0", None)
 for entry in model.get("materials", []):
+    source_surface = bpy.data.materials.get(entry.get("name", ""))
+    if source_surface and "casino_albedo" in source_surface:
+        entry["pbrMetallicRoughness"]["baseColorFactor"] = list(
+            source_surface["casino_albedo"]
+        )
     entry["doubleSided"] = entry.get("name") == "Glass"
     entry.get("extensions", {}).pop("KHR_materials_clearcoat", None)
+    if entry.get("name") == "Casino Brushed champagne bronze":
+        entry["pbrMetallicRoughness"]["metallicFactor"] = 0.85
+        entry["pbrMetallicRoughness"]["roughnessFactor"] = 0.24
     if (
         (args.fullscreen and entry.get("name") == "ReelPaper")
         or entry.get("name") in ("Lounge floor", "Velvet", "Contact shadow")
         or (
             entry.get("name", "").startswith("Casino ")
             and entry.get("name")
-            not in ("Casino Trim", "Casino Chrome", "Casino Casino gold light")
+            not in (
+                "Casino Trim",
+                "Casino Chrome",
+                "Casino Casino gold light",
+                "Casino Brushed champagne bronze",
+            )
         )
     ):
         entry.setdefault("extensions", {})["KHR_materials_unlit"] = {}

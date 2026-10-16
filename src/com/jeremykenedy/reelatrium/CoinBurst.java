@@ -7,22 +7,23 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
-/** Shared beveled coin geometry uses one instanced draw for the entire celebration. */
+/** Shared beveled coin geometry uses up to three bounded instanced draws for a celebration. */
 final class CoinBurst {
+  private static final int BATCH_SIZE = 64;
+  private static final int BATCHES = 3;
   private final Engine engine;
   private final Scene scene;
-  private final int entity;
+  private final int[] entities = new int[BATCHES];
   private final VertexBuffer vertices;
   private final IndexBuffer indices;
-  private final InstanceBuffer instances;
+  private final InstanceBuffer[] instances = new InstanceBuffer[BATCHES];
   private final MaterialInstance material;
-  private final float[] transforms = new float[64 * 16];
-  private boolean visible;
+  private final float[] transforms = new float[BATCH_SIZE * 16];
+  private final boolean[] visible = new boolean[BATCHES];
 
   CoinBurst(Engine engine, Scene scene, MaterialInstance trim) {
     this.engine = engine;
     this.scene = scene;
-    entity = EntityManager.get().create();
     material = MaterialInstance.duplicate(trim, "Gold payout coins");
     material.setParameter("baseColorFactor", .83f, .46f, .065f, 1f);
     material.setParameter("metallicFactor", 1f);
@@ -92,58 +93,69 @@ final class CoinBurst {
             .bufferType(IndexBuffer.Builder.IndexType.USHORT)
             .build(engine);
     indices.setBuffer(engine, triangles);
-    for (int i = 0; i < 64; i++) Matrix.setIdentityM(transforms, i * 16);
-    instances = new InstanceBuffer.Builder(64).localTransforms(transforms).build(engine);
-    new RenderableManager.Builder(1)
-        .boundingBox(new Box(0, 1, 1, 4, 4, 4))
-        .geometry(0, RenderableManager.PrimitiveType.TRIANGLES, vertices, indices)
-        .material(0, material)
-        .instances(64, instances)
-        .culling(false)
-        .castShadows(false)
-        .receiveShadows(false)
-        .build(engine, entity);
+    for (int i = 0; i < BATCH_SIZE; i++) Matrix.setIdentityM(transforms, i * 16);
+    // Filament limits automatic local transforms to 64 instances per renderable.
+    for (int batch = 0; batch < BATCHES; batch++) {
+      entities[batch] = EntityManager.get().create();
+      instances[batch] =
+          new InstanceBuffer.Builder(BATCH_SIZE).localTransforms(transforms).build(engine);
+      new RenderableManager.Builder(1)
+          .boundingBox(new Box(0, 1, 1, 4, 4, 4))
+          .geometry(0, RenderableManager.PrimitiveType.TRIANGLES, vertices, indices)
+          .material(0, material)
+          .instances(BATCH_SIZE, instances[batch])
+          .culling(false)
+          .castShadows(false)
+          .receiveShadows(false)
+          .build(engine, entities[batch]);
+    }
   }
 
   void update(double age, int count, double duration, long round, boolean fullscreen) {
     boolean active = count > 0 && age >= 0 && age < duration + 2.8;
-    if (active != visible) {
-      if (active) scene.addEntity(entity);
-      else scene.remove(entity);
-      visible = active;
-    }
-    if (!active) return;
-    for (int i = 0; i < 64; i++) {
-      int offset = i * 16;
-      Matrix.setIdentityM(transforms, offset);
-      double delay = i * 1.2 / Math.max(1, count - 1);
-      double birth = delay + Math.floor(Math.max(0, age - delay) / 1.8) * 1.8;
-      double t = age - birth;
-      if (i >= count || t < 0 || birth >= duration || t > 2.8) {
-        Matrix.scaleM(transforms, offset, 0, 0, 0);
-        continue;
+    for (int batch = 0; batch < BATCHES; batch++) {
+      boolean batchActive = active && count > batch * BATCH_SIZE;
+      if (batchActive != visible[batch]) {
+        if (batchActive) scene.addEntity(entities[batch]);
+        else scene.remove(entities[batch]);
+        visible[batch] = batchActive;
       }
-      double variation = Math.sin((round + 1) * 73.13 + i * 19.71 + birth * 17.3);
-      float x = (float) (variation * t * .8);
-      float y = (float) (.42 + (2.35 + .45 * Math.cos(i * 7.1)) * t - 1.85 * t * t);
-      float z = (float) (.55 + t * (.50 + .2 * Math.sin(i * 3.7)));
-      if (fullscreen) {
-        x *= .55f;
-        y = 1.035f + (y - .75f) * .28f;
-        z = 1.1f;
+      if (!batchActive) continue;
+      for (int local = 0; local < BATCH_SIZE; local++) {
+        int i = batch * BATCH_SIZE + local;
+        int offset = local * 16;
+        Matrix.setIdentityM(transforms, offset);
+        double delay = i * 1.2 / Math.max(1, count - 1);
+        double birth = delay + Math.floor(Math.max(0, age - delay) / 1.8) * 1.8;
+        double t = age - birth;
+        if (i >= count || t < 0 || birth >= duration || t > 2.8) {
+          Matrix.scaleM(transforms, offset, 0, 0, 0);
+          continue;
+        }
+        double variation = Math.sin((round + 1) * 73.13 + i * 19.71 + birth * 17.3);
+        float x = (float) (variation * t * .8);
+        float y = (float) (.42 + (2.35 + .45 * Math.cos(i * 7.1)) * t - 1.85 * t * t);
+        float z = (float) (.55 + t * (.50 + .2 * Math.sin(i * 3.7)));
+        if (fullscreen) {
+          x = x * .9f + (float) variation * .12f;
+          y = .74f + (y - .42f) * .55f;
+          z = 1.1f;
+        }
+        Matrix.translateM(transforms, offset, x, y, z);
+        if (fullscreen) Matrix.scaleM(transforms, offset, .6f, .6f, .6f);
+        Matrix.rotateM(transforms, offset, (float) (t * 430 + i * 41), .7f, 1f, .3f);
       }
-      Matrix.translateM(transforms, offset, x, y, z);
-      if (fullscreen) Matrix.scaleM(transforms, offset, .6f, .6f, .6f);
-      Matrix.rotateM(transforms, offset, (float) (t * 430 + i * 41), .7f, 1f, .3f);
+      instances[batch].setLocalTransforms(transforms, BATCH_SIZE);
     }
-    instances.setLocalTransforms(transforms, 64);
   }
 
   void destroy() {
-    scene.remove(entity);
-    engine.destroyEntity(entity);
-    EntityManager.get().destroy(entity);
-    engine.destroyInstanceBuffer(instances);
+    for (int batch = 0; batch < BATCHES; batch++) {
+      scene.remove(entities[batch]);
+      engine.destroyEntity(entities[batch]);
+      EntityManager.get().destroy(entities[batch]);
+      engine.destroyInstanceBuffer(instances[batch]);
+    }
     engine.destroyVertexBuffer(vertices);
     engine.destroyIndexBuffer(indices);
     engine.destroyMaterialInstance(material);

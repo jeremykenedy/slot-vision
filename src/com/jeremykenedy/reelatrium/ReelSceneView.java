@@ -392,7 +392,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     if (coins != null)
       coins.update(
           celebrationAge,
-          currentRound.jackpot() ? 64 : ReelRound.coinCount(currentRound.payout),
+          currentRound.celebrationCoinCount(),
           currentRound.celebrationDuration(),
           round,
           fullscreen);
