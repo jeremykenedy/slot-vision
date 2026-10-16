@@ -427,7 +427,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     sampler.setAnisotropy(4f);
     if (fullscreen) sampler.setWrapModeS(TextureSampler.WrapMode.CLAMP_TO_EDGE);
     if ("classic".equals(activeGame)) seasonAtlas = loadSeasonAtlas("classic");
-    else if (!"atrium".equals(season)) seasonAtlas = loadSeasonAtlas(season);
+    else if (fullscreen || !"atrium".equals(season)) seasonAtlas = loadSeasonAtlas(season);
     for (MaterialInstance material : asset.getInstance().getMaterialInstances()) {
       String name = material.getName();
       if (name == null) continue;
