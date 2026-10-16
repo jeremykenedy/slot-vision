@@ -4,7 +4,7 @@ Enable ADB debugging using the TV's own developer settings, connect ADB and use 
 
 ```sh
 python3 install.py --serial TV_IP:5555
-python3 install.py --serial TV_IP:5555 --apk build/reel-atrium.apk
+python3 install.py --serial TV_IP:5555 --apk build/slot-vision.apk
 ```
 
 Without `--apk`, the installer downloads the latest release from this repository, validates HTTPS release URLs and allowed asset redirects, and verifies SHA-256 before using `adb install -r`. Updates preserve preferences. `--yes` confirms installation for scripts. An unavailable device, failed checksum or ADB error exits with a failure.

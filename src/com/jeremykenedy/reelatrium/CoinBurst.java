@@ -38,8 +38,8 @@ final class CoinBurst {
         float cosine = (float) Math.cos(step * Math.PI * 2 / segments);
         float sine = (float) Math.sin(step * Math.PI * 2 / segments);
         positions.put(radius[ring] * cosine).put(radius[ring] * sine).put(depth[ring]);
-        float radial = ring == 0 || ring == 5 ? 0 : .7071068f;
-        float normalZ = ring <= 1 ? .7071068f : ring >= 4 ? -.7071068f : 0;
+        float radial = ring <= 1 || ring >= 4 ? 0 : 1;
+        float normalZ = ring <= 1 ? 1 : ring >= 4 ? -1 : 0;
         if (ring == 0) normalZ = 1;
         if (ring == 5) normalZ = -1;
         if (ring == 2 || ring == 3) radial = 1;
@@ -105,8 +105,8 @@ final class CoinBurst {
         .build(engine, entity);
   }
 
-  void update(double age, int count, long round) {
-    boolean active = count > 0 && age >= 0 && age < 3.7;
+  void update(double age, int count, double duration, long round, boolean fullscreen) {
+    boolean active = count > 0 && age >= 0 && age < duration + 2.8;
     if (active != visible) {
       if (active) scene.addEntity(entity);
       else scene.remove(entity);
@@ -116,16 +116,24 @@ final class CoinBurst {
     for (int i = 0; i < 64; i++) {
       int offset = i * 16;
       Matrix.setIdentityM(transforms, offset);
-      double t = age - i * .75 / Math.max(1, count - 1);
-      if (i >= count || t < 0 || t > 2.8) {
+      double delay = i * 1.2 / Math.max(1, count - 1);
+      double birth = delay + Math.floor(Math.max(0, age - delay) / 1.8) * 1.8;
+      double t = age - birth;
+      if (i >= count || t < 0 || birth >= duration || t > 2.8) {
         Matrix.scaleM(transforms, offset, 0, 0, 0);
         continue;
       }
-      double variation = Math.sin((round + 1) * 73.13 + i * 19.71);
+      double variation = Math.sin((round + 1) * 73.13 + i * 19.71 + birth * 17.3);
       float x = (float) (variation * t * .8);
       float y = (float) (.42 + (2.35 + .45 * Math.cos(i * 7.1)) * t - 1.85 * t * t);
       float z = (float) (.55 + t * (.50 + .2 * Math.sin(i * 3.7)));
+      if (fullscreen) {
+        x *= .55f;
+        y = 1.035f + (y - .75f) * .28f;
+        z = 1.1f;
+      }
       Matrix.translateM(transforms, offset, x, y, z);
+      if (fullscreen) Matrix.scaleM(transforms, offset, .6f, .6f, .6f);
       Matrix.rotateM(transforms, offset, (float) (t * 430 + i * 41), .7f, 1f, .3f);
     }
     instances.setLocalTransforms(transforms, 64);

@@ -19,6 +19,7 @@ parser.add_argument(
     default="atrium",
 )
 parser.add_argument("--render", action="store_true")
+parser.add_argument("--fullscreen", action="store_true")
 args = parser.parse_args(
     sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
 )
@@ -662,7 +663,27 @@ if hdr.exists():
     )
     world.node_tree.nodes.get("Background").inputs["Strength"].default_value = 0.4
 
-destination = ROOT / "assets/models" / (args.game + "_" + args.season + ".glb")
+if args.fullscreen:
+    visible_height = {"classic": 0.70, "palace": 0.63, "garden": 0.76}[args.game]
+    visible_width = visible_height * 16 / 9
+    original_width = window_width - 0.025
+    stretch = visible_width / original_width
+    for obj in list(bpy.data.objects):
+        if obj.name.startswith("Reel_"):
+            obj.location.x *= stretch
+        elif obj.name.startswith("Printed reel "):
+            for vertex in obj.data.vertices:
+                vertex.co.x *= stretch
+            for uv in obj.data.uv_layers.active.data:
+                uv.uv.x = (uv.uv.x - 0.5) * stretch + 0.5
+        else:
+            bpy.data.objects.remove(obj, do_unlink=True)
+
+if args.fullscreen:
+    box("Coin_material_source", (0, 0, -.1), (.001, .001, .001), trim, 0)
+
+prefix = "fullscreen_" if args.fullscreen else ""
+destination = ROOT / "assets/models" / (prefix + args.game + "_" + args.season + ".glb")
 destination.parent.mkdir(parents=True, exist_ok=True)
 bpy.ops.export_scene.gltf(
     filepath=str(destination),
@@ -684,10 +705,14 @@ model = json.loads(raw[20 : 20 + json_size])
 for entry in model.get("materials", []):
     entry["doubleSided"] = entry.get("name") == "Glass"
     entry.get("extensions", {}).pop("KHR_materials_clearcoat", None)
-    if entry.get("name") in ("Lounge floor", "Velvet", "Contact shadow") or (
-        entry.get("name", "").startswith("Casino ")
-        and entry.get("name")
-        not in ("Casino Trim", "Casino Chrome", "Casino Casino gold light")
+    if (
+        (args.fullscreen and entry.get("name") == "ReelPaper")
+        or entry.get("name") in ("Lounge floor", "Velvet", "Contact shadow")
+        or (
+            entry.get("name", "").startswith("Casino ")
+            and entry.get("name")
+            not in ("Casino Trim", "Casino Chrome", "Casino Casino gold light")
+        )
     ):
         entry.setdefault("extensions", {})["KHR_materials_unlit"] = {}
     if entry.get("name") == "Lounge floor":

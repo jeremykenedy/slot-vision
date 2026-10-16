@@ -7,3 +7,5 @@ Three geometry assets provide classic three reel, palace five reel and garden fi
 `ReelOptions` defines validated settings. `ReelRound` defines simulated outcomes, payline awards and smooth reel stops. Android preferences, the exported settings provider and the remote friendly settings activity use that contract. No wagers or gameplay accounting exist.
 
 Leaving preview or stopping the dream removes the frame callback. Destroying either owner releases the surface, models, textures, materials, lighting and engine. The app requests no permissions and uses no network client, background service or wake lock. Renderer quality is measured on the target TV before release; emulator performance is recorded separately.
+
+Fullscreen mode loads reel-only model variants with an orthographic camera. Horizontal atlas coordinates clamp at the edges to keep square symbols undistorted in wide cells. Cabinet and fullscreen views share the same seeded rounds, payline evaluation and bounded instanced coin renderer. Reel speed controls spin time; jackpot celebration remains ten seconds at every speed.

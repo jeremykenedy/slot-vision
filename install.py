@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install, update, or remove Reel Atrium from an Android TV over ADB."""
+"""Install, update, or remove Slot Vision from an Android TV over ADB."""
 
 import argparse
 import hashlib
@@ -17,10 +17,10 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 
 ROOT = Path(__file__).resolve().parent
-APK = ROOT / "build" / "reel-atrium.apk"
+APK = ROOT / "build" / "slot-vision.apk"
 PACKAGE = "com.jeremykenedy.reelatrium"
-REPOSITORY = "jeremykenedy/reel-atrium"
-APK_NAME = "reel-atrium.apk"
+REPOSITORY = "jeremykenedy/slot-vision"
+APK_NAME = "slot-vision.apk"
 CHECKSUM_NAME = APK_NAME + ".sha256"
 RELEASE_API = "https://api.github.com/repos/{}/releases/latest".format(REPOSITORY)
 ASSET_HOSTS = {"release-assets.githubusercontent.com", "objects.githubusercontent.com"}
@@ -110,7 +110,7 @@ class TrustedRedirectHandler(HTTPRedirectHandler):
 def open_url(url, max_bytes, follow_release_redirects=False):
     redirect_handler = TrustedRedirectHandler(follow_release_redirects)
     opener = build_opener(redirect_handler)
-    request = Request(url, headers={"Accept": "application/vnd.github+json", "User-Agent": "Reel-Atrium-Installer"})
+    request = Request(url, headers={"Accept": "application/vnd.github+json", "User-Agent": "Slot-Vision-Installer"})
     with opener.open(request, timeout=30) as response:
         final_url = response.geturl()
         if follow_release_redirects and final_url != url and not asset_redirect_url(final_url):
@@ -170,7 +170,7 @@ def download_latest_release():
     actual = hashlib.sha256(apk_bytes).hexdigest()
     if actual != expected:
         raise RuntimeError("The APK checksum does not match the published release checksum")
-    directory = Path(tempfile.mkdtemp(prefix="reel-atrium-"))
+    directory = Path(tempfile.mkdtemp(prefix="slot-vision-"))
     try:
         os.chmod(directory, 0o700)
         apk_path = directory / APK_NAME
@@ -185,7 +185,7 @@ def download_latest_release():
 def banner():
     print()
     print("  +--------------------------------------------------+")
-    print("  |                 REEL ATRIUM                     |")
+    print("  |                 SLOT VISION                     |")
     print("  |               SCREENSAVER INSTALLER             |")
     print("  +--------------------------------------------------+")
     print()
@@ -202,10 +202,10 @@ def step(number, total, label):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Install or remove Reel Atrium on an Android TV")
+    parser = argparse.ArgumentParser(description="Install or remove Slot Vision on an Android TV")
     parser.add_argument("--serial", help="ADB serial or TV_IP:5555")
     parser.add_argument("--apk", type=Path, help="Install a local APK instead of the latest verified release")
-    parser.add_argument("--uninstall", action="store_true", help="Remove Reel Atrium")
+    parser.add_argument("--uninstall", action="store_true", help="Remove Slot Vision")
     parser.add_argument("--yes", action="store_true", help="Confirm installation or update")
     parser.add_argument("--force", action="store_true", help="Allow non-interactive removal with --yes")
     args = parser.parse_args()
@@ -218,9 +218,9 @@ def main():
     if args.uninstall and args.yes and args.force and not sys.stdin.isatty():
         approved = True
     elif args.uninstall:
-        approved = confirm("Remove Reel Atrium and its local settings?", False)
+        approved = confirm("Remove Slot Vision and its local settings?", False)
     else:
-        approved = confirm("Install or update Reel Atrium from its latest release?", args.yes)
+        approved = confirm("Install or update Slot Vision from its latest release?", args.yes)
     if not approved:
         print("\n  Cancelled. No device changes were made.")
         return 0
@@ -249,9 +249,9 @@ def main():
             print("       Release {} verified against its published SHA-256".format(tag))
         operation = command + ["install", "-r", str(apk_path)]
     if args.uninstall:
-        print("\n  Removing Reel Atrium and its settings")
+        print("\n  Removing Slot Vision and its settings")
     else:
-        print("\n  Installing or updating Reel Atrium")
+        print("\n  Installing or updating Slot Vision")
     step(total_steps, total_steps, "Applying the change")
     try:
         result = run(operation)

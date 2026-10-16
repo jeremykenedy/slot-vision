@@ -70,6 +70,8 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
   private int reelSectors;
   private String activeGame;
   private boolean casino;
+  private boolean fullscreen;
+  private double viewportAspect = 16.0 / 9;
   private final long roundSeed = new Random().nextLong();
   private long roundNumber = Long.MIN_VALUE;
   private ReelRound currentRound;
@@ -156,7 +158,8 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
           public void onResized(int width, int height) {
             if (height == 0) return;
             view.setViewport(new Viewport(0, 0, width, height));
-            camera.setProjection(39, (double) width / height, .04, 30, Camera.Fov.VERTICAL);
+            viewportAspect = (double) width / height;
+            updateProjection();
           }
         });
     uiHelper.setDesiredSize(1280, 720);
@@ -235,18 +238,21 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     }
     double seconds = (frameTimeNanos - startedNanos) * 1e-9;
     animateReels(seconds);
-    double yaw = .26 + Math.sin(seconds * .07) * (wideCamera ? .44 : .30);
-    double distance = 3.2 + Math.sin(seconds * .043) * .025;
-    camera.lookAt(
-        Math.sin(yaw) * distance,
-        1.08 + Math.sin(seconds * .051) * .025,
-        Math.cos(yaw) * distance,
-        Math.sin(seconds * .047) * .08,
-        .94 + Math.sin(seconds * .037) * .015,
-        0,
-        0,
-        1,
-        0);
+    if (fullscreen) camera.lookAt(0, 1.035, 3.2, 0, 1.035, 0, 0, 1, 0);
+    else {
+      double yaw = .26 + Math.sin(seconds * .07) * (wideCamera ? .44 : .30);
+      double distance = 3.2 + Math.sin(seconds * .043) * .025;
+      camera.lookAt(
+          Math.sin(yaw) * distance,
+          1.08 + Math.sin(seconds * .051) * .025,
+          Math.cos(yaw) * distance,
+          Math.sin(seconds * .047) * .08,
+          .94 + Math.sin(seconds * .037) * .015,
+          0,
+          0,
+          1,
+          0);
+    }
     if (renderer.beginFrame(swapChain, frameTimeNanos)) {
       renderer.render(view);
       renderer.endFrame();
@@ -268,10 +274,27 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     engine.getLightManager().setIntensity(key, 16000f * lighting);
     activeGame = selected[0];
     casino = "casino".equals(selected[5]);
+    fullscreen = "fullscreen".equals(selected[6]);
+    updateProjection();
     roundNumber = Long.MIN_VALUE;
     reelSectors = "garden".equals(selected[0]) ? 16 : 8;
-    loadModel("models/" + selected[0] + "_atrium.glb", selected[1]);
+    loadModel(
+        "models/" + (fullscreen ? "fullscreen_" : "") + selected[0] + "_atrium.glb", selected[1]);
     startedNanos = System.nanoTime();
+  }
+
+  private void updateProjection() {
+    if (fullscreen) {
+      double height = "garden".equals(activeGame) ? .76 : "palace".equals(activeGame) ? .63 : .70;
+      camera.setProjection(
+          Camera.Projection.ORTHO,
+          -height * viewportAspect / 2,
+          height * viewportAspect / 2,
+          -height / 2,
+          height / 2,
+          .04,
+          30);
+    } else camera.setProjection(39, viewportAspect, .04, 30, Camera.Fov.VERTICAL);
   }
 
   private void loadEnvironment() {
@@ -331,16 +354,17 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
 
   private boolean environmentVisible(String name) {
     if (name == null) return true;
+    if (name.equals("Coin_material_source")) return false;
     if (name.startsWith("Casino_")) return casino;
     if (name.startsWith("Lounge_")) return !casino;
     return true;
   }
 
   private void animateReels(double seconds) {
-    double elapsed = seconds * speed;
-    long round = (long) Math.floor(elapsed / 12);
-    double phase = elapsed - round * 12;
     int columns = ReelOptions.columns(activeGame);
+    double duration = ReelRound.roundDuration(columns, speed);
+    long round = (long) Math.floor(seconds / duration);
+    double phase = (seconds - round * duration) * speed;
     if (round != roundNumber) {
       previousRound = new ReelRound(roundSeed, round - 1, columns, ReelOptions.rows(activeGame));
       currentRound = new ReelRound(roundSeed, round, columns, ReelOptions.rows(activeGame));
@@ -361,10 +385,15 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     transforms.commitLocalTransformTransaction();
     double celebrationAge = (phase - ReelRound.settledAt(columns)) / speed;
     if (coins != null)
-      coins.update(celebrationAge, ReelRound.coinCount(currentRound.payout), round);
+      coins.update(
+          celebrationAge,
+          currentRound.jackpot() ? 64 : ReelRound.coinCount(currentRound.payout),
+          currentRound.celebrationDuration(),
+          round,
+          fullscreen);
     if (beacon != null) {
       float pulse =
-          currentRound.jackpot() && celebrationAge >= 0
+          currentRound.jackpot() && celebrationAge >= 0 && celebrationAge < 10
               ? Math.max(0f, (float) Math.sin(celebrationAge * 9))
               : 0f;
       beacon.setParameter("emissiveFactor", pulse * 12000f, pulse * 180f, pulse * 80f);
@@ -396,6 +425,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
             TextureSampler.MagFilter.LINEAR,
             TextureSampler.WrapMode.REPEAT);
     sampler.setAnisotropy(4f);
+    if (fullscreen) sampler.setWrapModeS(TextureSampler.WrapMode.CLAMP_TO_EDGE);
     if ("classic".equals(activeGame)) seasonAtlas = loadSeasonAtlas("classic");
     else if (!"atrium".equals(season)) seasonAtlas = loadSeasonAtlas(season);
     for (MaterialInstance material : asset.getInstance().getMaterialInstances()) {

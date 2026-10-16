@@ -1,15 +1,15 @@
 <p align="center">
-  <a href="https://github.com/jeremykenedy/reel-atrium#gh-light-mode-only"><picture><source media="(max-width: 600px) and (prefers-reduced-motion: reduce)" srcset="art/banner-mobile-still-light.a5d23c1aa5e3.svg"><source media="(prefers-reduced-motion: reduce)" srcset="art/banner-still-light.71e8ba1c0913.svg"><source media="(max-width: 600px)" srcset="art/banner-mobile-light.0da3dbbf9101.svg"><img src="art/banner-light.e589f28267a3.svg#gh-light-mode-only" alt="Reel Atrium" width="800"></picture></a>
-  <a href="https://github.com/jeremykenedy/reel-atrium#gh-dark-mode-only"><picture><source media="(max-width: 600px) and (prefers-reduced-motion: reduce)" srcset="art/banner-mobile-still-dark.fabef62c08e1.svg"><source media="(prefers-reduced-motion: reduce)" srcset="art/banner-still-dark.ca94abb70b3d.svg"><source media="(max-width: 600px)" srcset="art/banner-mobile-dark.e44fe09cb8e6.svg"><img src="art/banner-dark.ae8c674c2150.svg#gh-dark-mode-only" alt="Reel Atrium" width="800"></picture></a>
+  <a href="https://github.com/jeremykenedy/slot-vision#gh-light-mode-only"><picture><source media="(max-width: 600px) and (prefers-reduced-motion: reduce)" srcset="art/banner-mobile-still-light.476f80a3f155.svg"><source media="(prefers-reduced-motion: reduce)" srcset="art/banner-still-light.6bb6ba84b7e7.svg"><source media="(max-width: 600px)" srcset="art/banner-mobile-light.dfd0ae7e94a9.svg"><img src="art/banner-light.eea7f140e241.svg#gh-light-mode-only" alt="Slot Vision" width="800"></picture></a>
+  <a href="https://github.com/jeremykenedy/slot-vision#gh-dark-mode-only"><picture><source media="(max-width: 600px) and (prefers-reduced-motion: reduce)" srcset="art/banner-mobile-still-dark.d274279a8fb1.svg"><source media="(prefers-reduced-motion: reduce)" srcset="art/banner-still-dark.7e263b16cb3e.svg"><source media="(max-width: 600px)" srcset="art/banner-mobile-dark.4b4704ad1559.svg"><img src="art/banner-dark.843b5d9f59b3.svg#gh-dark-mode-only" alt="Slot Vision" width="800"></picture></a>
 </p>
 <p align="center">A native TV screensaver with dimensional slot cabinets, moving reels and seasonal light.</p>
 <p align="center">
-  <a href="https://github.com/jeremykenedy/reel-atrium/actions/workflows/ci.yml"><img src="https://github.com/jeremykenedy/reel-atrium/actions/workflows/ci.yml/badge.svg" alt="Build, tests and coverage"></a>
+  <a href="https://github.com/jeremykenedy/slot-vision/actions/workflows/ci.yml"><img src="https://github.com/jeremykenedy/slot-vision/actions/workflows/ci.yml/badge.svg?branch=main" alt="Build, tests and coverage"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache--2.0-blue" alt="Apache 2.0"></a>
 </p>
 <p align="center">
   <a href="https://github.com/jeremykenedy"><img src="https://img.shields.io/github/followers/jeremykenedy?label=Follow" alt="Follow on GitHub"></a>
-  <a href="https://github.com/jeremykenedy/reel-atrium/stargazers"><img src="https://img.shields.io/github/stars/jeremykenedy/reel-atrium?label=Star" alt="Star on GitHub"></a>
+  <a href="https://github.com/jeremykenedy/slot-vision/stargazers"><img src="https://img.shields.io/github/stars/jeremykenedy/slot-vision?label=Star" alt="Star on GitHub"></a>
   <a href="https://github.com/sponsors/jeremykenedy"><img src="https://img.shields.io/badge/Sponsor-GitHub-ea4aaa" alt="Sponsor on GitHub"></a>
 </p>
 
@@ -37,13 +37,13 @@ Android API 23 or later, an OpenGL ES 3 renderer and a landscape display. Physic
 
 ## Installation
 
-Download the signed APK and its SHA-256 file from [Releases](https://github.com/jeremykenedy/reel-atrium/releases). The guided installer verifies the published checksum before installing the latest version:
+Download the signed APK and its SHA-256 file from [Releases](https://github.com/jeremykenedy/slot-vision/releases). The guided installer verifies the published checksum before installing the latest version:
 
 ```sh
 python3 install.py --serial YOUR_TV_IP:5555
 ```
 
-Run the same command to update while retaining app preferences. The APK keeps its package and signing identity. To use a locally built APK, pass `--apk build/reel-atrium.apk`. The installer installs the app without changing TV timers or screensaver selection. Before removal, select another screensaver in the TV settings or Toolkit, then run:
+Run the same command to update while retaining app preferences. The APK keeps its package and signing identity. To use a locally built APK, pass `--apk build/slot-vision.apk`. The installer installs the app without changing TV timers or screensaver selection. Before removal, select another screensaver in the TV settings or Toolkit, then run:
 
 ```sh
 python3 install.py --serial YOUR_TV_IP:5555 --uninstall
@@ -59,15 +59,15 @@ Uninstalling removes this app's preferences. [Installation details](docs/INSTALL
 git clone https://github.com/jeremykenedy/fire-tv-toolkit.git
 cd fire-tv-toolkit
 node setup.js
-firetv-screensavers --install=reel-atrium --yes
-firetv-set-screensaver --set=reel-atrium --yes
+firetv-screensavers --install=slot-vision --yes
+firetv-set-screensaver --set=slot-vision --yes
 ```
 
-To update, repeat `firetv-screensavers --install=reel-atrium --yes`. To remove, choose another saver first, then run `firetv-screensavers --uninstall=reel-atrium --yes --force`. Fire TV UI discovers the installed DreamService and opens its settings; it does not download APKs from GitHub. These commands require a Toolkit release containing the Reel Atrium entry.
+To update, repeat `firetv-screensavers --install=slot-vision --yes`. To remove, choose another saver first, then run `firetv-screensavers --uninstall=slot-vision --yes --force`. Fire TV UI discovers the installed DreamService and opens its settings; it does not download APKs from GitHub. These commands require a Toolkit release containing the Slot Vision entry.
 
 ## Quick start
 
-Open Reel Atrium from the TV app launcher, select **Preview screensaver**, and use Back to return. Select the game, season, reel speed, lighting, camera orbit and background with the D-pad. Set Reel Atrium as the TV's screensaver through the platform settings or Toolkit.
+Open Slot Vision from the TV app launcher, select **Preview screensaver**, and use Back to return. Select the game, season, reel speed, lighting, camera orbit, background and cabinet or fullscreen view with the D-pad. Set Slot Vision as the TV's screensaver through the platform settings or Toolkit.
 
 ## Features
 
@@ -75,6 +75,7 @@ Open Reel Atrium from the TV app launcher, select **Preview screensaver**, and u
 - Spring blossom, summer sun, autumn harvest and winter frost themes.
 - Real perspective geometry, curved reel strips, layered cabinet trim and original symbols.
 - Settled payline outcomes, proportional flying gold coins and a pulsing jackpot beacon.
+- Fullscreen reels without a machine, with the same winning outcomes and coin showers.
 - Continuous front camera orbit and a choice of private lounge or casino floor.
 - Remote settings with persistent choices and Random for each option.
 - No wagers, currency, purchases, accounts, ads, analytics or tracking.
@@ -89,6 +90,7 @@ Camera movement shifts the whole scene to reduce fixed imagery. It cannot guaran
 | Season | Midnight atrium, spring, summer, autumn, winter, random | Midnight atrium |
 | Speed | Relaxed, natural, lively, random | Natural |
 | Lighting | Dim, cinematic, bright, random | Cinematic |
+| View | Slot machine, fullscreen reels, random | Slot machine |
 | Camera | Slow front orbit, slow wide front orbit, random | Slow front orbit |
 | Background | Private lounge, casino floor, random | Private lounge |
 
@@ -131,7 +133,8 @@ Captured from the current native app on the API 34 Google TV emulator. The displ
   </tr>
   <tr>
     <td><img src="art/screenshots/palace-spring-androidtv.png" alt="Five reel palace with spring symbols and rose colored trim"></td>
-    <td><img src="art/screenshots/settings-androidtv.png" alt="Native remote settings with all six appearance controls"></td>
+    <td><img src="art/screenshots/fullscreen-androidtv.png" alt="Fullscreen traditional reels with winning 777 and a gold coin shower"></td>
+    <td><img src="art/screenshots/settings-androidtv.png" alt="Native remote settings with all seven appearance controls"></td>
   </tr>
 </table>
 

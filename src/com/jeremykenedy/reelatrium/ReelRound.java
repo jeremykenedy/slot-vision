@@ -57,6 +57,14 @@ public final class ReelRound {
     return payout <= 0 ? 0 : Math.min(64, 4 + (int) Math.ceil(Math.sqrt(payout) * 3));
   }
 
+  public double celebrationDuration() {
+    return payout <= 0 ? 0 : jackpot() ? 10 : Math.min(6, 1.5 + Math.sqrt(payout) * .12);
+  }
+
+  public static double roundDuration(int columns, float speed) {
+    return settledAt(columns) / speed + 11;
+  }
+
   private static int wrap(int value, int sectors) {
     return (value % sectors + sectors) % sectors;
   }

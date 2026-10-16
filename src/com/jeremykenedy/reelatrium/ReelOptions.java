@@ -5,10 +5,16 @@ import java.util.Random;
 /** The public settings contract; unknown persisted values resolve to documented defaults. */
 public final class ReelOptions {
   public static final String[] KEYS = {
-    "game", "season", "speed", "brightness", "camera", "background"
+    "game", "season", "speed", "brightness", "camera", "background", "view"
   };
   public static final String[] TITLES = {
-    "Machine game", "Season and theme", "Reel speed", "Lighting", "Camera movement", "Background"
+    "Machine game",
+    "Season and theme",
+    "Reel speed",
+    "Lighting",
+    "Camera movement",
+    "Background",
+    "View mode"
   };
   public static final String[][] VALUES = {
     {"classic", "palace", "garden", "random"},
@@ -16,7 +22,8 @@ public final class ReelOptions {
     {"relaxed", "natural", "lively", "random"},
     {"dim", "cinematic", "bright", "random"},
     {"gentle", "wide", "random"},
-    {"lounge", "casino", "random"}
+    {"lounge", "casino", "random"},
+    {"cabinet", "fullscreen", "random"}
   };
   public static final String[][] LABELS = {
     {"Classic three reels", "Palace five reels", "Garden twenty-five tiles", "Random"},
@@ -24,10 +31,11 @@ public final class ReelOptions {
     {"Relaxed", "Natural", "Lively", "Random"},
     {"Dim", "Cinematic", "Bright", "Random"},
     {"Slow front orbit", "Slow wide front orbit", "Random"},
-    {"Private lounge", "Casino floor", "Random"}
+    {"Private lounge", "Casino floor", "Random"},
+    {"Slot machine", "Fullscreen reels", "Random"}
   };
   public static final String[] DEFAULTS = {
-    "classic", "atrium", "natural", "cinematic", "gentle", "lounge"
+    "classic", "atrium", "natural", "cinematic", "gentle", "lounge", "cabinet"
   };
 
   private ReelOptions() {}

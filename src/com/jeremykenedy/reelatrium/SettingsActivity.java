@@ -17,12 +17,12 @@ public final class SettingsActivity extends Activity {
     layout.setPadding(64, 32, 64, 48);
     scroll.addView(layout);
     TextView title = new TextView(this);
-    title.setText("Reel Atrium");
-    title.setTextSize(32);
+    title.setText("Slot Vision");
+    title.setTextSize(28);
     layout.addView(title);
     TextView subtitle = new TextView(this);
-    subtitle.setText("A quiet cabinet of moving reels, warm metal and seasonal light.");
-    subtitle.setTextSize(18);
+    subtitle.setText("Dimensional slot machines, fullscreen reels and seasonal light.");
+    subtitle.setTextSize(16);
     layout.addView(subtitle);
     Button preview = new Button(this);
     preview.setText("Preview screensaver");
@@ -41,8 +41,8 @@ public final class SettingsActivity extends Activity {
   private void addChoice(LinearLayout layout, final int index) {
     TextView label = new TextView(this);
     label.setText(ReelOptions.TITLES[index]);
-    label.setTextSize(20);
-    label.setPadding(0, 18, 0, 4);
+    label.setTextSize(18);
+    label.setPadding(0, 8, 0, 2);
     layout.addView(label);
     Spinner spinner = new Spinner(this);
     ArrayAdapter<String> adapter =

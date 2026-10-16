@@ -35,6 +35,34 @@ public final class ReelRoundTest {
   }
 
   @Test
+  public void jackpotShowersLastTenSecondsAndFinishBeforeTheNextSpinAtEverySpeed() {
+    for (int columns : new int[] {3, 5}) {
+      ReelRound jackpot = new ReelRound(1, 0, columns, 3);
+      assertEquals(10, jackpot.celebrationDuration(), 0);
+      for (float speed : new float[] {.65f, 1f, 1.35f})
+        assertTrue(
+            ReelRound.roundDuration(columns, speed)
+                > ReelRound.settledAt(columns) / speed + jackpot.celebrationDuration());
+    }
+    boolean smallWin = false;
+    boolean largeWin = false;
+    boolean loss = false;
+    for (int round = 1; round < 100; round++) {
+      ReelRound current = new ReelRound(8, round, 5, 5);
+      if (current.payout == 0) {
+        assertEquals(0, current.celebrationDuration(), 0);
+        loss = true;
+      } else if (!current.jackpot()) {
+        assertTrue(current.celebrationDuration() >= 1.5);
+        assertTrue(current.celebrationDuration() <= 6);
+        smallWin |= current.celebrationDuration() < 6;
+        largeWin |= current.celebrationDuration() == 6;
+      }
+    }
+    assertTrue(smallWin && largeWin && loss);
+  }
+
+  @Test
   public void spinsSettleExactlyOnTheSymbolsUsedToCalculateThePayout() {
     for (int columns : new int[] {3, 5})
       for (int rows : new int[] {3, 5}) {

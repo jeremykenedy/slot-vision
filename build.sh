@@ -6,8 +6,8 @@ SDK="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
 TOOLS="$SDK/build-tools/36.0.0"
 ANDROID_JAR="$SDK/platforms/android-36/android.jar"
 OUT="$ROOT/build"
-KEYSTORE="${REEL_ATRIUM_KEYSTORE:-$HOME/.android/reel-atrium.jks}"
-KEYPASS="${REEL_ATRIUM_KEYPASS:-$HOME/.android/reel-atrium.pass}"
+KEYSTORE="${SLOT_VISION_KEYSTORE:-$HOME/.android/reel-atrium.jks}"
+KEYPASS="${SLOT_VISION_KEYPASS:-$HOME/.android/reel-atrium.pass}"
 VERSION_NAME="${VERSION_NAME:-1.0.0}"
 VERSION_CODE="${VERSION_CODE:-1}"
 
@@ -61,7 +61,7 @@ if [[ ! -f "$KEYSTORE" ]]; then
   [[ ! -e "$KEYPASS" ]] || { echo "Signing key is missing but its password file exists; restore the key." >&2; exit 1; }
   (umask 077 && openssl rand -hex 24 > "$KEYPASS")
   keytool -genkeypair -keystore "$KEYSTORE" -storepass:file "$KEYPASS" -alias reel-atrium \
-    -keyalg RSA -keysize 3072 -validity 10950 -dname "CN=Reel Atrium Release"
+    -keyalg RSA -keysize 3072 -validity 10950 -dname "CN=Slot Vision Release"
   chmod 600 "$KEYSTORE"
 fi
 [[ -s "$KEYPASS" ]] || { echo "Restore the signing-key password file." >&2; exit 1; }
@@ -99,12 +99,12 @@ java -cp "$OUT/filament-downloads/r8.jar" com.android.tools.r8.R8 --release --no
 (cd "$OUT/native" && zip -q -r "$OUT/unsigned.apk" lib)
 "$TOOLS/zipalign" -f 4 "$OUT/unsigned.apk" "$OUT/aligned.apk"
 if [[ "${UNSIGNED:-0}" == 1 ]]; then
-  cp "$OUT/aligned.apk" "$OUT/reel-atrium.apk"
+  cp "$OUT/aligned.apk" "$OUT/slot-vision.apk"
 else
 "$TOOLS/apksigner" sign --ks "$KEYSTORE" --ks-pass "file:$KEYPASS" --ks-key-alias reel-atrium \
-  --out "$OUT/reel-atrium.apk" "$OUT/aligned.apk"
-"$TOOLS/apksigner" verify "$OUT/reel-atrium.apk"
+  --out "$OUT/slot-vision.apk" "$OUT/aligned.apk"
+"$TOOLS/apksigner" verify "$OUT/slot-vision.apk"
 fi
-(cd "$OUT" && shasum -a 256 reel-atrium.apk > reel-atrium.apk.sha256)
-printf 'Built %s\n' "$OUT/reel-atrium.apk"
-cat "$OUT/reel-atrium.apk.sha256"
+(cd "$OUT" && shasum -a 256 slot-vision.apk > slot-vision.apk.sha256)
+printf 'Built %s\n' "$OUT/slot-vision.apk"
+cat "$OUT/slot-vision.apk.sha256"

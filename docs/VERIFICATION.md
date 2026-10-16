@@ -1,6 +1,6 @@
 # Verification
 
-Validation date: October 15, 2026. The current candidate uses Filament 1.77.3 and original 3D cabinet models. Captures of the earlier custom OpenGL prototype are rejected and are not evidence for this candidate. Public release and final screenshot replacement are held pending physical playback and motion review.
+Validation date: October 15, 2026. The current candidate uses Filament 1.77.3 and original 3D cabinet models. Captures of the earlier custom OpenGL prototype are rejected and are not evidence for this candidate. Public release is held pending final physical playback and motion review.
 
 | Device | API | Evidence | Status |
 | --- | --- | --- | --- |
@@ -33,7 +33,7 @@ An 18.022-second 1920x1080 screen recording contained 536 frames, about 29.74 fr
 
 Reviewed private captures `build/filament-classic-exposure-low.png` and `build/filament-winter-exposure-low.png` come from the running API 34 native preview. They show the current 3D models, physical materials and authored reel artwork. The latter shows the garden five-row layout with winter atlas and chrome trim. `build/filament-classic-motion.mp4` records actual native motion.
 
-The committed screenshot paths and small in-app preview still contain rejected prototype images. Replace them with the final reviewed native captures before any publication. Complete uninterrupted physical DreamService playback and remaining lifecycle checks, then review final moving output. Rebuild and verify the signed artifact and remote primary-branch CI before tagging a release. No current candidate is publicly released.
+Committed screenshots and the small in-app preview now use reviewed native Filament captures. Final physical footage remains pending. Complete uninterrupted physical DreamService playback and remaining lifecycle checks, then review final moving output. Rebuild and verify the signed artifact and remote primary-branch CI before tagging a release. No current candidate is publicly released.
 
 ## Physical performance investigation
 
@@ -54,3 +54,5 @@ The refined casino and contact shadow build ran as the real DreamService on the 
 Native recording of the first decorative jackpot shows center 777 symbols stopping before proportional beveled gold coins cross the foreground. The beacon alternates bright and dark intervals while the camera continues its front orbit. Invalid background values are rejected without changing the persisted provider settings; all six settings fit the native remote settings view.
 
 A subsequent guarded physical test selected Reel successfully and displayed its DreamActivity. At 21:09:16 the platform gently woke the dream, then an unrelated DocumentsUI picker and StreamVault activity took foreground. At 21:10:24 StreamVault launched another OPEN_DOCUMENT request. That recording is not an uninterrupted playback or performance result. The app was later killed as a cached background process under memory pressure. Exact selected component, enabled state and all six app settings were restored. No new Reel exception occurred in that attempt. Final physical playback and worst case measurements remain pending a coordinated TV window.
+
+The renamed Slot Vision candidate adds cabinet/fullscreen/random view selection and ten-second jackpot coin showers, recycling at most 64 instanced coins. Pure outcome tests verify that every configured speed leaves enough time for the complete jackpot celebration before the next spin. Fullscreen classic center 777 and the shower were captured in the native API 34 preview. A 24.001 second emulator recording contains 377 frames, approximately 15.71 captured FPS under host contention; this is not a physical performance pass. Initial cold fullscreen material compilation briefly shows a black surface and still needs startup timing. Final physical tests must include fullscreen, casino scenery and sustained coins.

@@ -26,7 +26,7 @@ jobs:
         run: UNSIGNED=1 bash build.sh
       - name: Check packaged privacy contract
         run: |
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions build/reel-atrium.apk > build/permissions.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions build/slot-vision.apk > build/permissions.txt
           if grep -q 'uses-permission' build/permissions.txt; then cat build/permissions.txt; exit 1; fi
       - name: Check documentation and XML
         run: python3 scripts/check-docs.py
