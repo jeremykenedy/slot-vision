@@ -88,6 +88,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
   private boolean loading;
   private long startedNanos;
   private long lastFrameNanos;
+  private FullscreenCamera fullscreenCamera = new FullscreenCamera("classic", 16.0 / 9);
 
   public ReelSceneView(Context context) {
     super(context);
@@ -238,8 +239,11 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     }
     double seconds = (frameTimeNanos - startedNanos) * 1e-9;
     animateReels(seconds);
-    if (fullscreen) camera.lookAt(0, 1.035, 3.2, 0, 1.035, 0, 0, 1, 0);
-    else {
+    if (fullscreen) {
+      double x = fullscreenCamera.x(seconds);
+      double y = 1.035 + fullscreenCamera.y(seconds);
+      camera.lookAt(x, y, 3.2, x, y, 0, 0, 1, 0);
+    } else {
       double yaw = .26 + Math.sin(seconds * .07) * (wideCamera ? .44 : .30);
       double distance = 3.2 + Math.sin(seconds * .043) * .025;
       camera.lookAt(
@@ -285,7 +289,8 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
 
   private void updateProjection() {
     if (fullscreen) {
-      double height = "garden".equals(activeGame) ? .76 : "palace".equals(activeGame) ? .63 : .70;
+      fullscreenCamera = new FullscreenCamera(activeGame, viewportAspect);
+      double height = fullscreenCamera.height;
       camera.setProjection(
           Camera.Projection.ORTHO,
           -height * viewportAspect / 2,
