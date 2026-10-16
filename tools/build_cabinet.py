@@ -674,13 +674,16 @@ if args.fullscreen:
         elif obj.name.startswith("Printed reel "):
             for vertex in obj.data.vertices:
                 vertex.co.x *= stretch
+            symbol_height = math.tau * radius / slots
+            printed_width = (reel_width - 0.008) * stretch
+            uv_span = printed_width / symbol_height
             for uv in obj.data.uv_layers.active.data:
-                uv.uv.x = (uv.uv.x - 0.5) * stretch + 0.5
+                uv.uv.x = (uv.uv.x - 0.5) * uv_span + 0.5
         else:
             bpy.data.objects.remove(obj, do_unlink=True)
 
 if args.fullscreen:
-    box("Coin_material_source", (0, 0, -.1), (.001, .001, .001), trim, 0)
+    box("Coin_material_source", (0, 0, -0.1), (0.001, 0.001, 0.001), trim, 0)
 
 prefix = "fullscreen_" if args.fullscreen else ""
 destination = ROOT / "assets/models" / (prefix + args.game + "_" + args.season + ".glb")
