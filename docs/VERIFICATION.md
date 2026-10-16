@@ -1,6 +1,6 @@
 # Verification
 
-Validation date: October 16, 2026. Slot Vision uses Filament 1.77.3, original modeled cabinets and three-dimensional spinning reels. The published release remains pending the final source and artifact checks below.
+Validation date: October 16, 2026. Slot Vision uses Filament 1.77.3, original modeled cabinets and three-dimensional spinning reels. The production candidate completed the source, artifact and device checks below.
 
 | Device | API | Evidence | Status |
 | --- | --- | --- | --- |
@@ -30,7 +30,7 @@ Signed candidate `c53ea6fcbf48baab21d95460917005c151732dc88c12355aef7ea8de6cbb05
 
 All seven app preferences and five screensaver/sleep settings were compared before and after the check and restored exactly. The TV returned to its original asleep state. Back from each directly launched preview returned to the underlying Fire TV UI. Earlier Settings/Preview/Back testing separately verified return to app settings.
 
-Final rendering candidate `b1989a2ad94409fb952db95867a1c53d193b076f98ba507e7aa9cc4bb078b40e` reduces the lamp emission and retains its pulsing celebration. Its physical garden sample presented 125 buffers at 29.5224 per second, with a 33.33 millisecond median interval; fullscreen classic presented 127 buffers at 29.9999 per second. Twelve-second native movies and six current API 34 gallery scenes were captured. All seven app preferences and five system values were restored exactly, and the TV returned asleep. The lamp appears red in the emulator and bright warm during the physical jackpot pulse. No cross-device color equivalence is claimed.
+Final rendering candidate `b1989a2ad94409fb952db95867a1c53d193b076f98ba507e7aa9cc4bb078b40e` reduces the lamp emission and retains its pulsing celebration. Its physical garden sample presented 125 buffers at 29.5224 per second, with a 33.33 millisecond median interval; fullscreen classic presented 127 buffers at 29.9999 per second. Twelve-second native movies and six current API 34 gallery scenes were captured. The public gallery loaded all seven images at desktop 1280 and mobile 320 without page overflow and was visually reviewed. All seven app preferences and five system values were restored exactly, and the TV returned asleep. The lamp appears red in the emulator and bright warm during the physical jackpot pulse. No cross-device color equivalence is claimed.
 
 ## Native dream and limits
 
