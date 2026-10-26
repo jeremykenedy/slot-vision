@@ -13,6 +13,7 @@ import com.google.android.filament.Camera;
 import com.google.android.filament.ColorGrading;
 import com.google.android.filament.Engine;
 import com.google.android.filament.EntityManager;
+import com.google.android.filament.Fence;
 import com.google.android.filament.IndirectLight;
 import com.google.android.filament.LightManager;
 import com.google.android.filament.MaterialInstance;
@@ -37,6 +38,7 @@ import com.google.android.filament.utils.Utils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Random;
@@ -59,6 +61,10 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
   private final int[] readyEntities = new int[128];
   private final int[] reelInstances = new int[5];
   private final float[][] reelRest = new float[5][16];
+  private final float[] leverRest = new float[16];
+  private int leverInstance, leverEntity, gripEntity;
+  private float leverAngle, maximumLeverAngle;
+  private int viewportWidth, viewportHeight, requestedCoins;
   private final float[] rotation = new float[16];
   private final float[] transform = new float[16];
   private final SharedPreferences preferences;
@@ -89,6 +95,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
   private boolean destroyed;
   private boolean loading;
   private long startedNanos;
+  private Fence firstSceneFrame;
   private long lastFrameNanos;
   private FullscreenCamera fullscreenCamera = new FullscreenCamera("classic", 16.0 / 9);
 
@@ -162,11 +169,13 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
           public void onResized(int width, int height) {
             if (height == 0) return;
             view.setViewport(new Viewport(0, 0, width, height));
+            viewportWidth = width;
+            viewportHeight = height;
             viewportAspect = (double) width / height;
             updateProjection();
           }
         });
-    uiHelper.setDesiredSize(1280, 720);
+    uiHelper.setDesiredSize(1920, 1080);
     uiHelper.attachTo(this);
   }
 
@@ -239,9 +248,22 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
           if (name != null && name.startsWith("Jackpot beacon")) beacon = material;
         }
         asset.releaseSourceData();
+        startedNanos = 0;
       }
     }
-    double seconds = (frameTimeNanos - startedNanos) * 1e-9;
+    if (firstSceneFrame != null) {
+      Fence.FenceStatus status = firstSceneFrame.wait(Fence.Mode.FLUSH, 0);
+      if (status != Fence.FenceStatus.TIMEOUT_EXPIRED) {
+        engine.destroyFence(firstSceneFrame);
+        firstSceneFrame = null;
+        if (status == Fence.FenceStatus.ERROR)
+          throw new IllegalStateException("The first cabinet frame did not finish");
+        // Start the pull only after the complete cabinet has reached the display.
+        startedNanos = frameTimeNanos + 350_000_000L;
+      }
+    }
+    double seconds =
+        loading || startedNanos == 0 ? 0 : Math.max(0, frameTimeNanos - startedNanos) * 1e-9;
     animateReels(seconds);
     if (fullscreen) {
       double x = fullscreenCamera.x(seconds);
@@ -265,7 +287,36 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
       lastFrameNanos = frameTimeNanos;
       renderer.render(view);
       renderer.endFrame();
+      if (!loading && startedNanos == 0 && firstSceneFrame == null)
+        firstSceneFrame = engine.createFence();
     }
+  }
+
+  public void dump(PrintWriter out, String prefix) {
+    out.println(
+        prefix
+            + "Lever entity="
+            + leverEntity
+            + " instance="
+            + leverInstance
+            + " angle="
+            + leverAngle
+            + " maximum="
+            + maximumLeverAngle);
+    if (asset != null && leverInstance != 0) {
+      TransformManager transforms = engine.getTransformManager();
+      float[] world = new float[16];
+      transforms.getWorldTransform(leverInstance, world);
+      out.println(prefix + "Lever world=" + java.util.Arrays.toString(world));
+      int grip = transforms.getInstance(gripEntity);
+      if (grip != 0) {
+        transforms.getWorldTransform(grip, world);
+        out.println(prefix + "Grip world=" + java.util.Arrays.toString(world));
+      }
+    }
+    out.println(prefix + "Slot renderer: " + viewportWidth + "x" + viewportHeight + ", FXAA");
+    out.println(prefix + "Scene: " + (fullscreen ? "fullscreen" : casino ? "casino" : "lounge"));
+    out.println(prefix + "Requested coin instances=" + requestedCoins + ", round=" + roundNumber);
   }
 
   private void loadSettings() {
@@ -284,14 +335,14 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     activeGame = selected[0];
     casino = "casino".equals(selected[5]);
     fullscreen = "fullscreen".equals(selected[6]);
-    uiHelper.setDesiredSize(1280, 720);
+    uiHelper.setDesiredSize(1920, 1080);
     view.setPostProcessingEnabled(true);
     updateProjection();
     roundNumber = Long.MIN_VALUE;
     reelSectors = "garden".equals(selected[0]) ? 16 : 8;
     loadModel(
         "models/" + (fullscreen ? "fullscreen_" : "") + selected[0] + "_atrium.glb", selected[1]);
-    startedNanos = System.nanoTime();
+    startedNanos = 0;
   }
 
   private void updateProjection() {
@@ -347,10 +398,18 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
       reelInstances[i] = entity == 0 ? 0 : transforms.getInstance(entity);
       if (reelInstances[i] != 0) transforms.getTransform(reelInstances[i], reelRest[i]);
     }
+    leverEntity = asset.getFirstEntityByName("Lever_Pivot");
+    gripEntity = asset.getFirstEntityByName("Lever_Grip");
+    leverInstance = leverEntity == 0 ? 0 : transforms.getInstance(leverEntity);
+    if (leverInstance != 0) transforms.getTransform(leverInstance, leverRest);
     activeSeason = season;
   }
 
   private void unloadModel() {
+    if (firstSceneFrame != null) {
+      engine.destroyFence(firstSceneFrame);
+      firstSceneFrame = null;
+    }
     if (asset == null) return;
     if (coins != null) {
       coins.destroy();
@@ -381,9 +440,10 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
 
   private void animateReels(double seconds) {
     int columns = ReelOptions.columns(activeGame);
-    double duration = ReelRound.roundDuration(columns, speed);
+    double duration = LeverMotion.roundDuration(columns, speed, fullscreen);
     long round = (long) Math.floor(seconds / duration);
-    double phase = (seconds - round * duration) * speed;
+    double elapsed = seconds - round * duration;
+    double phase = LeverMotion.reelPhase(elapsed, speed, fullscreen);
     if (round != roundNumber) {
       previousRound = new ReelRound(roundSeed, round - 1, columns, ReelOptions.rows(activeGame));
       currentRound = new ReelRound(roundSeed, round, columns, ReelOptions.rows(activeGame));
@@ -391,6 +451,13 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     }
     TransformManager transforms = engine.getTransformManager();
     transforms.openLocalTransformTransaction();
+    if (leverInstance != 0) {
+      leverAngle = LeverMotion.angle(elapsed);
+      maximumLeverAngle = Math.max(maximumLeverAngle, leverAngle);
+      Matrix.setRotateM(rotation, 0, leverAngle, 1, 0, 0);
+      Matrix.multiplyMM(transform, 0, leverRest, 0, rotation, 0);
+      transforms.setTransform(leverInstance, transform);
+    }
     for (int i = 0; i < columns; i++) {
       if (reelInstances[i] == 0) continue;
       float angle =
@@ -403,6 +470,10 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     }
     transforms.commitLocalTransformTransaction();
     double celebrationAge = (phase - ReelRound.settledAt(columns)) / speed;
+    requestedCoins =
+        celebrationAge >= 0 && celebrationAge < currentRound.celebrationDuration() + 2.8
+            ? currentRound.celebrationCoinCount()
+            : 0;
     if (coins != null)
       coins.update(
           celebrationAge,

@@ -33,4 +33,10 @@ public final class ReelAtriumDreamService extends DreamService {
     scene = null;
     super.onDetachedFromWindow();
   }
+
+  @Override
+  protected void dump(java.io.FileDescriptor fd, java.io.PrintWriter out, String[] args) {
+    super.dump(fd, out, args);
+    if (scene != null) scene.dump(out, "  ");
+  }
 }

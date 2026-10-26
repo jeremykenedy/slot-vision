@@ -39,4 +39,11 @@ public final class PreviewActivity extends Activity {
     if (scene != null) scene.stop();
     super.onPause();
   }
+
+  @Override
+  public void dump(
+      String prefix, java.io.FileDescriptor fd, java.io.PrintWriter out, String[] args) {
+    super.dump(prefix, fd, out, args);
+    if (scene != null) scene.dump(out, prefix);
+  }
 }
