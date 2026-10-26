@@ -37,6 +37,7 @@ import com.google.android.filament.utils.Utils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Random;
@@ -91,6 +92,11 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
   private boolean loading;
   private long startedNanos;
   private long lastFrameNanos;
+  private final FrameMeasurements prepareCosts = new FrameMeasurements();
+  private final FrameMeasurements submitCosts = new FrameMeasurements();
+  private int requestedCoins;
+  private int viewportWidth;
+  private int viewportHeight;
   private FullscreenCamera fullscreenCamera = new FullscreenCamera("classic", 16.0 / 9);
 
   public ReelSceneView(Context context) {
@@ -162,12 +168,14 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
           @Override
           public void onResized(int width, int height) {
             if (height == 0) return;
+            viewportWidth = width;
+            viewportHeight = height;
             view.setViewport(new Viewport(0, 0, width, height));
             viewportAspect = (double) width / height;
             updateProjection();
           }
         });
-    uiHelper.setDesiredSize(1280, 720);
+    uiHelper.setDesiredSize(1920, 1080);
     uiHelper.attachTo(this);
   }
 
@@ -219,6 +227,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     Choreographer.getInstance().postFrameCallback(this);
     if (!uiHelper.isReadyToRender() || swapChain == null) return;
     if (frameTimeNanos - lastFrameNanos < 30_000_000L) return;
+    long preparedAt = System.nanoTime();
     if (asset != null) {
       resourceLoader.asyncUpdateLoad();
       int count;
@@ -262,11 +271,56 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
           1,
           0);
     }
+    long submittedAt = System.nanoTime();
+    prepareCosts.add(submittedAt - preparedAt);
     if (renderer.beginFrame(swapChain, frameTimeNanos)) {
       lastFrameNanos = frameTimeNanos;
       renderer.render(view);
       renderer.endFrame();
+      submitCosts.add(System.nanoTime() - submittedAt);
     }
+  }
+
+  public void dump(PrintWriter out, String prefix) {
+    out.println(prefix + "Slot renderer: " + viewportWidth + "x" + viewportHeight + ", FXAA");
+    out.println(prefix + "Scene: " + (fullscreen ? "fullscreen" : casino ? "casino" : "lounge"));
+    out.println(
+        prefix
+            + "Recent prepare samples="
+            + prepareCosts.count()
+            + " meanNs="
+            + prepareCosts.meanNanos());
+    out.println(
+        prefix
+            + "Recent Java/native frame-submit samples="
+            + submitCosts.count()
+            + " meanNs="
+            + submitCosts.meanNanos()
+            + " (includes any blocking)");
+    out.println(
+        prefix
+            + "Requested coin instances="
+            + requestedCoins
+            + ", instanced batches="
+            + ((requestedCoins + 63) / 64));
+    if (destroyed) {
+      out.println(prefix + "GPU timing unavailable: renderer destroyed");
+      return;
+    }
+    Renderer.FrameInfo[] history = new Renderer.FrameInfo[64];
+    for (int i = 0; i < history.length; i++) history[i] = new Renderer.FrameInfo();
+    int count = renderer.getFrameInfoHistory(history);
+    FrameMeasurements gpu = new FrameMeasurements();
+    for (int i = 0; i < Math.min(count, history.length); i++) {
+      gpu.add(history[i].gpuFrameDuration);
+    }
+    out.println(
+        prefix
+            + "Recent GPU samples="
+            + gpu.count()
+            + " meanNs="
+            + gpu.meanNanos()
+            + (gpu.count() == 0 ? " (unavailable on this backend)" : ""));
   }
 
   private void loadSettings() {
@@ -290,7 +344,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     if (indirectLight != null) indirectLight.setIntensity(8000f * lighting);
     int key = engine.getLightManager().getInstance(keyEntity);
     engine.getLightManager().setIntensity(key, 16000f * lighting);
-    uiHelper.setDesiredSize(1280, 720);
+    uiHelper.setDesiredSize(1920, 1080);
     view.setPostProcessingEnabled(true);
     updateProjection();
     roundNumber = Long.MIN_VALUE;
@@ -418,6 +472,10 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     }
     transforms.commitLocalTransformTransaction();
     double celebrationAge = (phase - ReelRound.settledAt(columns)) / speed;
+    requestedCoins =
+        celebrationAge >= 0 && celebrationAge < currentRound.celebrationDuration() + 2.8
+            ? currentRound.celebrationCoinCount()
+            : 0;
     if (coins != null)
       coins.update(
           celebrationAge,

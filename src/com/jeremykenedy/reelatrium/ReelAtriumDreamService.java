@@ -1,6 +1,8 @@
 package com.jeremykenedy.reelatrium;
 
 import android.service.dreams.DreamService;
+import java.io.FileDescriptor;
+import java.io.PrintWriter;
 
 public final class ReelAtriumDreamService extends DreamService {
   private ReelSceneView scene;
@@ -24,6 +26,12 @@ public final class ReelAtriumDreamService extends DreamService {
   public void onDreamingStopped() {
     if (scene != null) scene.stop();
     super.onDreamingStopped();
+  }
+
+  @Override
+  protected void dump(FileDescriptor fd, PrintWriter out, String[] args) {
+    super.dump(fd, out, args);
+    if (scene != null) scene.dump(out, "");
   }
 
   @Override
