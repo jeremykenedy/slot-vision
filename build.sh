@@ -9,7 +9,7 @@ OUT="$ROOT/build"
 KEYSTORE="${SLOT_VISION_KEYSTORE:-$HOME/.android/reel-atrium.jks}"
 KEYPASS="${SLOT_VISION_KEYPASS:-$HOME/.android/reel-atrium.pass}"
 VERSION_NAME="${VERSION_NAME:-1.1.0}"
-VERSION_CODE="${VERSION_CODE:-9}"
+VERSION_CODE="${VERSION_CODE:-11}"
 
 for tool in javac keytool openssl zip; do
   command -v "$tool" >/dev/null || { echo "Missing required tool: $tool" >&2; exit 1; }

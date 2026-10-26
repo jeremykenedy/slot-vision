@@ -13,6 +13,7 @@ import com.google.android.filament.Camera;
 import com.google.android.filament.ColorGrading;
 import com.google.android.filament.Engine;
 import com.google.android.filament.EntityManager;
+import com.google.android.filament.Fence;
 import com.google.android.filament.IndirectLight;
 import com.google.android.filament.LightManager;
 import com.google.android.filament.MaterialInstance;
@@ -61,7 +62,8 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
   private final int[] reelInstances = new int[5];
   private final float[][] reelRest = new float[5][16];
   private final float[] leverRest = new float[16];
-  private int leverInstance;
+  private int leverInstance, leverEntity, gripEntity;
+  private float leverAngle, maximumLeverAngle;
   private final float[] rotation = new float[16];
   private final float[] transform = new float[16];
   private final SharedPreferences preferences;
@@ -93,6 +95,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
   private boolean destroyed;
   private boolean loading;
   private long startedNanos;
+  private Fence firstSceneFrame;
   private long lastFrameNanos;
   private final FrameMeasurements prepareCosts = new FrameMeasurements();
   private final FrameMeasurements submitCosts = new FrameMeasurements();
@@ -251,10 +254,22 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
           if (name != null && name.startsWith("Jackpot beacon")) beacon = material;
         }
         asset.releaseSourceData();
-        startedNanos = frameTimeNanos;
+        startedNanos = 0;
       }
     }
-    double seconds = loading ? 0 : Math.max(0, frameTimeNanos - startedNanos) * 1e-9;
+    if (firstSceneFrame != null) {
+      Fence.FenceStatus status = firstSceneFrame.wait(Fence.Mode.FLUSH, 0);
+      if (status != Fence.FenceStatus.TIMEOUT_EXPIRED) {
+        engine.destroyFence(firstSceneFrame);
+        firstSceneFrame = null;
+        if (status == Fence.FenceStatus.ERROR)
+          throw new IllegalStateException("The first cabinet frame did not finish");
+        // Let the completed scene reach the display before the first pull starts.
+        startedNanos = frameTimeNanos + 350_000_000L;
+      }
+    }
+    double seconds =
+        loading || startedNanos == 0 ? 0 : Math.max(0, frameTimeNanos - startedNanos) * 1e-9;
     animateReels(seconds);
     if (fullscreen) {
       double x = fullscreenCamera.x(seconds);
@@ -280,11 +295,34 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
       lastFrameNanos = frameTimeNanos;
       renderer.render(view);
       renderer.endFrame();
+      if (!loading && startedNanos == 0 && firstSceneFrame == null)
+        firstSceneFrame = engine.createFence();
       submitCosts.add(System.nanoTime() - submittedAt);
     }
   }
 
   public void dump(PrintWriter out, String prefix) {
+    out.println(
+        prefix
+            + "Lever entity="
+            + leverEntity
+            + " instance="
+            + leverInstance
+            + " angle="
+            + leverAngle
+            + " maximum="
+            + maximumLeverAngle);
+    if (asset != null && leverInstance != 0) {
+      TransformManager transforms = engine.getTransformManager();
+      float[] world = new float[16];
+      transforms.getWorldTransform(leverInstance, world);
+      out.println(prefix + "Lever world=" + java.util.Arrays.toString(world));
+      int grip = transforms.getInstance(gripEntity);
+      if (grip != 0) {
+        transforms.getWorldTransform(grip, world);
+        out.println(prefix + "Grip world=" + java.util.Arrays.toString(world));
+      }
+    }
     out.println(prefix + "Slot renderer: " + viewportWidth + "x" + viewportHeight + ", FXAA");
     out.println(prefix + "Scene: " + (fullscreen ? "fullscreen" : casino ? "casino" : "lounge"));
     out.println(
@@ -354,7 +392,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     reelSectors = "garden".equals(selected[0]) ? 16 : 8;
     loadModel(
         "models/" + (fullscreen ? "fullscreen_" : "") + selected[0] + "_atrium.glb", selected[1]);
-    startedNanos = System.nanoTime();
+    startedNanos = 0;
   }
 
   private void updateProjection() {
@@ -419,13 +457,18 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
       reelInstances[i] = entity == 0 ? 0 : transforms.getInstance(entity);
       if (reelInstances[i] != 0) transforms.getTransform(reelInstances[i], reelRest[i]);
     }
-    int lever = asset.getFirstEntityByName("Lever_Pivot");
-    leverInstance = lever == 0 ? 0 : transforms.getInstance(lever);
+    leverEntity = asset.getFirstEntityByName("Lever_Pivot");
+    gripEntity = asset.getFirstEntityByName("Lever_Grip");
+    leverInstance = leverEntity == 0 ? 0 : transforms.getInstance(leverEntity);
     if (leverInstance != 0) transforms.getTransform(leverInstance, leverRest);
     activeSeason = season;
   }
 
   private void unloadModel() {
+    if (firstSceneFrame != null) {
+      engine.destroyFence(firstSceneFrame);
+      firstSceneFrame = null;
+    }
     if (asset == null) return;
     if (coins != null) {
       coins.destroy();
@@ -468,7 +511,9 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     TransformManager transforms = engine.getTransformManager();
     transforms.openLocalTransformTransaction();
     if (leverInstance != 0) {
-      Matrix.setRotateM(rotation, 0, LeverMotion.angle(elapsed), 1, 0, 0);
+      leverAngle = LeverMotion.angle(elapsed);
+      maximumLeverAngle = Math.max(maximumLeverAngle, leverAngle);
+      Matrix.setRotateM(rotation, 0, leverAngle, 1, 0, 0);
       Matrix.multiplyMM(transform, 0, leverRest, 0, rotation, 0);
       transforms.setTransform(leverInstance, transform);
     }
