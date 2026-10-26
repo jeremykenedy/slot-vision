@@ -1,5 +1,17 @@
 # Verification
 
+## Unreleased 1.1 candidate
+
+The current code11 candidate is `97be4f504afe7e9fc5f4e314f4977e2099a3a81b37b153419fcdc66255184120` (57,333,680 bytes). It preserves the production package and signer. All three cabinet models have an articulated chrome lever and red grip; fullscreen models are unchanged. Reels wait until the lever reaches the bottom. First-scene submission passes a nonblocking rendering-thread fence before the round clock starts, so initial shader preparation does not consume the opening pull.
+
+Actual API34 native recordings cover a 39.942-second classic sequence and a 7.995-second garden sequence at a 1920x1080 rendering surface. The first visible pull and return are present in both. Later rounds, camera movement, reels and cabinet coin showers remain animated. DUMP calls report a 70-degree maximum pull, changing grip transforms and 192 jackpot coin instances without the earlier FrameInfo JNI failure. Fullscreen inspection shows reels without a cabinet or lever. These observations are functional evidence; capture rates do not establish physical-TV performance.
+
+The in-place native update retained all seven choices. Back, Home and return to the same activity were exercised. The test restored launcher preferences, system values, surrounding packages and readable providers, external files, app-op modes, accessibility and guard state; the candidate was stopped afterward. Pure host checks, model checks, formatting and signed builds pass.
+
+This candidate is not released. True1080 cabinet rendering in the preceding code6 candidate measured roughly13.5 to13.8 presents per second on the tested API28 Fire TV. Casino GPU costs, final physical code11 behavior, the complete screenshot refresh and owner visual acceptance remain open. The production screenshots and measurements below describe1.0 and must not be applied to1.1.
+
+## Published 1.0 evidence
+
 Validation date: October 16, 2026. Slot Vision uses Filament 1.77.3, original modeled cabinets and three-dimensional spinning reels. The production candidate completed the source, artifact and device checks below.
 
 | Device | API | Evidence | Status |
