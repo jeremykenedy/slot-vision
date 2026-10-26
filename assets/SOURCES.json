@@ -54,5 +54,24 @@
     "generator": "tools/build_cabinet.py exports descriptors from garden_atrium.glb",
     "compiler": "Filament matc1.77.3, mobile OpenGL",
     "license": "Apache-2.0"
+  },
+  "room_artwork": {
+    "source": "Original casino and private lounge environment artwork",
+    "files": {
+      "art/environments/casino-panorama.png": "11a1e6bc0d31db6539c32ee9051121fd6c1ff543f91d0447f9d898d53e7cacb8",
+      "art/environments/lounge-panorama.png": "45f2e4ace06f26dbb92907a527733217ca5b90a2ebe32ddf54bdc70c7839dffd"
+    },
+    "projection": "Photographic surroundings projected over the permitted front camera arc and a contact floor; animated foreground cabinet remains modeled geometry",
+    "generator": "tools/rebuild_environment.py",
+    "status": "Unreviewed native candidate; no performance or quality acceptance yet"
+  },
+  "room_reflections": {
+    "source": "Room environment artwork prefiltered with Filament cmgen 1.77.3",
+    "size": 256,
+    "samples": 128,
+    "files": {
+      "assets/ibl/casino_ibl.ktx": "b60e1621824259dc0aea849848d54bd4b54a7e43084016ed46c2bbeb10c2b39f",
+      "assets/ibl/lounge_ibl.ktx": "1b2dbbb33136109c1c38bcf1d08c68d11047ffaf57b3ea65971a4010553a8f7f"
+    }
   }
 }

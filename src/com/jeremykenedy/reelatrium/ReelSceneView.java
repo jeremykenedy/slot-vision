@@ -65,6 +65,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
   private FilamentAsset asset;
   private IndirectLight indirectLight;
   private Texture environmentTexture;
+  private String lightingEnvironment;
   private Texture seasonAtlas;
   private String activeSeason;
   private int reelSectors;
@@ -248,8 +249,8 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
       double y = 1.035 + fullscreenCamera.y(seconds);
       camera.lookAt(x, y, 3.2, x, y, 0, 0, 1, 0);
     } else {
-      double yaw = .26 + Math.sin(seconds * .07) * (wideCamera ? .44 : .30);
-      double distance = 3.2 + Math.sin(seconds * .043) * .025;
+      double yaw = .10 + Math.sin(seconds * .055) * (wideCamera ? .32 : .20);
+      double distance = 2.90 + Math.sin(seconds * .043) * .025;
       camera.lookAt(
           Math.sin(yaw) * distance,
           1.08 + Math.sin(seconds * .051) * .025,
@@ -278,12 +279,17 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     speed = ReelOptions.speed(selected[2]);
     lighting = ReelOptions.light(selected[3]);
     wideCamera = "wide".equals(selected[4]);
-    if (indirectLight != null) indirectLight.setIntensity(8000f * lighting);
-    int key = engine.getLightManager().getInstance(keyEntity);
-    engine.getLightManager().setIntensity(key, 16000f * lighting);
     activeGame = selected[0];
     casino = "casino".equals(selected[5]);
     fullscreen = "fullscreen".equals(selected[6]);
+    try {
+      loadLighting(fullscreen ? "atrium" : casino ? "casino" : "lounge");
+    } catch (IOException error) {
+      throw new IllegalStateException("The room lighting environment is missing", error);
+    }
+    if (indirectLight != null) indirectLight.setIntensity(8000f * lighting);
+    int key = engine.getLightManager().getInstance(keyEntity);
+    engine.getLightManager().setIntensity(key, 16000f * lighting);
     uiHelper.setDesiredSize(1280, 720);
     view.setPostProcessingEnabled(true);
     updateProjection();
@@ -316,17 +322,26 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
               engine,
               readAsset("materials/solid-surfaces.filamat"),
               readAsset("materials/solid-surfaces.json"));
-      KTX1Loader.IndirectLightBundle environment =
-          KTX1Loader.INSTANCE.createIndirectLight(
-              engine, readAsset("ibl/atrium_ibl.ktx"), new KTX1Loader.Options());
-      indirectLight = environment.getIndirectLight();
-      environmentTexture = environment.getCubemap();
-      if (indirectLight == null) throw new IllegalStateException("Invalid lighting environment");
-      indirectLight.setIntensity(8000f);
-      scene.setIndirectLight(indirectLight);
+      loadLighting("atrium");
     } catch (IOException error) {
       throw new IllegalStateException("The lighting environment is missing", error);
     }
+  }
+
+  private void loadLighting(String name) throws IOException {
+    if (name.equals(lightingEnvironment)) return;
+    KTX1Loader.IndirectLightBundle environment =
+        KTX1Loader.INSTANCE.createIndirectLight(
+            engine, readAsset("ibl/" + name + "_ibl.ktx"), new KTX1Loader.Options());
+    IndirectLight nextLight = environment.getIndirectLight();
+    if (nextLight == null) throw new IllegalStateException("Invalid lighting environment");
+    nextLight.setIntensity(8000f * lighting);
+    scene.setIndirectLight(nextLight);
+    if (indirectLight != null) engine.destroyIndirectLight(indirectLight);
+    if (environmentTexture != null) engine.destroyTexture(environmentTexture);
+    indirectLight = nextLight;
+    environmentTexture = environment.getCubemap();
+    lightingEnvironment = name;
   }
 
   private void loadModel(String filename, String season) {
