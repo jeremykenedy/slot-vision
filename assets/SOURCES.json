@@ -35,19 +35,11 @@
     }
   },
   "casino_environment": {
-    "source": "Original modeled casino room: cabinet banks, upholstered chairs, columns, ceiling coves and tiered chandeliers",
-    "generator": [
-      "tools/build_casino.py",
-      "tools/build_cabinet.py"
-    ],
+    "source": "Original photographic-style casino and private lounge artwork surrounding modeled animated cabinets",
+    "generator": "tools/rebuild_environment.py",
     "license": "Apache-2.0",
-    "lighting": "Static CPU Cycles direct/indirect diffuse lighting baked to mesh colors with preserved albedos; champagne metal uses live PBR reflections; batched by nine materials",
-    "carpet": {
-      "source": "Original woven ornate casino carpet texture",
-      "file": "materials/casino_carpet.png",
-      "sha256": "603b7ad9c70fa488928dc5fd84e278ecf57d57291ecfb0279ab8c8559bb5b9b4"
-    },
-    "status": "Reviewed native API34 gallery; physical API30 cabinet jackpot29.52 and fullscreen30.00 actual presented buffers/s, seven app and five system settings restored"
+    "lighting": "Room artwork supplies reflection maps; the nearby woven carpet is a real textured plane. The background is original artwork, not a photograph of a real venue.",
+    "status": "First native candidate rejected for weak cabinet exposure and stretched projected floor; correction under review."
   },
   "solid_surface_material": {
     "source": "Original lit Filament solid surface material",
@@ -58,12 +50,13 @@
   "room_artwork": {
     "source": "Original casino and private lounge environment artwork",
     "files": {
+      "art/environments/carpet.png": "dcbf842aa813d14d0ec10e9f4ebb09024ba7c409ff85138766c38b03144a64ba",
       "art/environments/casino-panorama.png": "11a1e6bc0d31db6539c32ee9051121fd6c1ff543f91d0447f9d898d53e7cacb8",
       "art/environments/lounge-panorama.png": "45f2e4ace06f26dbb92907a527733217ca5b90a2ebe32ddf54bdc70c7839dffd"
     },
-    "projection": "Photographic surroundings projected over the permitted front camera arc and a contact floor; animated foreground cabinet remains modeled geometry",
+    "projection": "Artwork covers the permitted front camera arc; the animated cabinet, rotating reels, coins and contact floor remain modeled geometry.",
     "generator": "tools/rebuild_environment.py",
-    "status": "Unreviewed native candidate; no performance or quality acceptance yet"
+    "status": "First native exposure rejected; corrected radiance and feathered physical carpet pending second native review"
   },
   "room_reflections": {
     "source": "Room environment artwork prefiltered with Filament cmgen 1.77.3",
@@ -72,6 +65,12 @@
     "files": {
       "assets/ibl/casino_ibl.ktx": "b60e1621824259dc0aea849848d54bd4b54a7e43084016ed46c2bbeb10c2b39f",
       "assets/ibl/lounge_ibl.ktx": "1b2dbbb33136109c1c38bcf1d08c68d11047ffaf57b3ea65971a4010553a8f7f"
+    },
+    "radiance_normalization": {
+      "studio_intensity": 8000,
+      "casino_intensity": 104000,
+      "lounge_intensity": 184000,
+      "basis": "Diffuse L00 luminance relative to the existing studio environment; native exposure review pending"
     }
   }
 }

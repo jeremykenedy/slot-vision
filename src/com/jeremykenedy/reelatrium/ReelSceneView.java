@@ -66,6 +66,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
   private IndirectLight indirectLight;
   private Texture environmentTexture;
   private String lightingEnvironment;
+  private float environmentIntensity = 8000f;
   private Texture seasonAtlas;
   private String activeSeason;
   private int reelSectors;
@@ -287,7 +288,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     } catch (IOException error) {
       throw new IllegalStateException("The room lighting environment is missing", error);
     }
-    if (indirectLight != null) indirectLight.setIntensity(8000f * lighting);
+    if (indirectLight != null) indirectLight.setIntensity(environmentIntensity * lighting);
     int key = engine.getLightManager().getInstance(keyEntity);
     engine.getLightManager().setIntensity(key, 16000f * lighting);
     uiHelper.setDesiredSize(1280, 720);
@@ -335,7 +336,10 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
             engine, readAsset("ibl/" + name + "_ibl.ktx"), new KTX1Loader.Options());
     IndirectLight nextLight = environment.getIndirectLight();
     if (nextLight == null) throw new IllegalStateException("Invalid lighting environment");
-    nextLight.setIntensity(8000f * lighting);
+    // Normalize the photographic-style plates' low radiance against the studio
+    // environment, retaining each room's color and directional reflections.
+    environmentIntensity = "lounge".equals(name) ? 184000f : "casino".equals(name) ? 104000f : 8000f;
+    nextLight.setIntensity(environmentIntensity * lighting);
     scene.setIndirectLight(nextLight);
     if (indirectLight != null) engine.destroyIndirectLight(indirectLight);
     if (environmentTexture != null) engine.destroyTexture(environmentTexture);

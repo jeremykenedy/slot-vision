@@ -16,6 +16,22 @@ def model(raw):
 
 
 class ModelCompatibilityTest(unittest.TestCase):
+    def test_nearby_floor_blends_away_before_background_furniture(self):
+        raw = (ROOT / "assets/models/classic_atrium.glb").read_bytes()
+        data = model(raw)
+        binary = raw[28 + struct.unpack_from("<I", raw, 12)[0]:]
+        floor = next(mesh for mesh in data["meshes"] if mesh["name"] == "Casino_Floor")
+        primitive = floor["primitives"][0]
+        self.assertEqual("BLEND", data["materials"][primitive["material"]]["alphaMode"])
+        color = data["accessors"][primitive["attributes"]["COLOR_0"]]
+        view = data["bufferViews"][color["bufferView"]]
+        offset = view.get("byteOffset", 0) + color.get("byteOffset", 0)
+        code, size, maximum = {5121: ("B", 1, 255), 5123: ("H", 2, 65535)}[color["componentType"]]
+        alpha = [struct.unpack_from("<" + code, binary, offset + (index * 4 + 3) * size)[0]
+                 for index in range(color["count"])]
+        self.assertEqual(0, min(alpha))
+        self.assertEqual(maximum, max(alpha))
+
     def test_every_game_retains_its_original_reel_axles(self):
         for game in ("classic", "palace", "garden"):
             filename = "assets/models/" + game + "_atrium.glb"

@@ -38,21 +38,42 @@ def surface(label, image):
     return material
 
 
-def mesh(label, vertices, faces, material):
+def mesh(label, vertices, faces, material, floor=False):
     data = bpy.data.meshes.new(label)
     data.from_pydata(vertices, [], faces)
     data.update()
     layer = data.uv_layers.new(name="Environment projection")
     for polygon in data.polygons:
-        coordinates = [uv(vertices[data.loops[index].vertex_index]) for index in polygon.loop_indices]
+        points = [vertices[data.loops[index].vertex_index] for index in polygon.loop_indices]
+        coordinates = [(point[0] / 2.8, point[1] / 2.8) if floor else uv(point) for point in points]
         # Avoid interpolating across the longitude seam.
-        if max(p[0] for p in coordinates) - min(p[0] for p in coordinates) > 0.5:
+        if not floor and max(p[0] for p in coordinates) - min(p[0] for p in coordinates) > 0.5:
             coordinates = [(u + (1 if u < 0.5 else 0), v) for u, v in coordinates]
         for index, coordinate in zip(polygon.loop_indices, coordinates):
             layer.data[index].uv = coordinate
     obj = bpy.data.objects.new(label, data)
     bpy.context.collection.objects.link(obj)
     data.materials.append(material)
+    if floor:
+        colors = data.color_attributes.new(name="Floor feather", type="FLOAT_COLOR", domain="CORNER")
+        for loop in data.loops:
+            x, y, _ = vertices[loop.vertex_index]
+            radius = math.sqrt((x / 1.5) ** 2 + (y / 2.2) ** 2)
+            alpha = max(0, min(1, (1 - radius) / 0.35))
+            colors.data[loop.index].color = (1, 1, 1, alpha)
+        nodes, links = material.node_tree.nodes, material.node_tree.links
+        shader = nodes.get("Principled BSDF")
+        texture = next(node for node in nodes if node.type == "TEX_IMAGE")
+        color = nodes.new("ShaderNodeVertexColor")
+        color.layer_name = "Floor feather"
+        multiply = nodes.new("ShaderNodeMixRGB")
+        multiply.blend_type = "MULTIPLY"
+        multiply.inputs[0].default_value = 1
+        links.new(texture.outputs["Color"], multiply.inputs[1])
+        links.new(color.outputs["Color"], multiply.inputs[2])
+        links.new(multiply.outputs["Color"], shader.inputs["Base Color"])
+        links.new(color.outputs["Alpha"], shader.inputs["Alpha"])
+        material.surface_render_method = "DITHERED"
 
 
 def room(label, image):
@@ -73,24 +94,32 @@ def room(label, image):
             index = ring * (segments + 1) + segment
             faces.append((index, index + 1, index + segments + 2, index + segments + 1))
     mesh(label + "_Surround", vertices, faces, material)
-    # A real floor, projected from the same origin, supplies contact and nearby
-    # parallax without a visible join to the surrounding room.
+    # Use a genuine planar material at nearby feet, not projected furniture from
+    # the background plate. Its pattern moves correctly during camera drift.
     vertices, faces = [], []
     size = 32
     for row in range(size + 1):
         for column in range(size + 1):
-            vertices.append((-8 + column * 0.5, -8 + row * 0.5, -0.002))
+            vertices.append((-1.5 + column * 3 / size, -2.2 + row * 4.4 / size, -0.002))
     for row in range(size):
         for column in range(size):
             index = row * (size + 1) + column
             faces.append((index, index + 1, index + size + 2, index + size + 1))
-    mesh(label + "_Floor", vertices, faces, material)
+    carpet = surface(label, ROOT / "assets/environments/carpet.jpg")
+    carpet.name = label + " woven carpet"
+    mesh(label + "_Floor", vertices, faces, carpet, floor=True)
 
 
 def finalize(path):
     raw = path.read_bytes()
     length = struct.unpack_from("<I", raw, 12)[0]
     model = json.loads(raw[20:20 + length])
+    for entry in model.get("meshes", []):
+        if entry.get("name", "").endswith("_Floor"):
+            for primitive in entry["primitives"]:
+                attributes = primitive["attributes"]
+                if "COLOR_1" in attributes:
+                    attributes["COLOR_0"] = attributes.pop("COLOR_1")
     for material in model.get("materials", []):
         if "photographic surroundings" in material.get("name", ""):
             material.setdefault("extensions", {})["KHR_materials_unlit"] = {}
