@@ -13,7 +13,7 @@ java { sourceCompatibility = JavaVersion.VERSION_1_8; targetCompatibility = Java
 sourceSets {
     main.java {
         srcDirs = ['src/com/jeremykenedy/reelatrium']
-        include 'ReelOptions.java', 'ReelRound.java', 'FullscreenCamera.java', 'FrameMeasurements.java'
+        include 'ReelOptions.java', 'ReelRound.java', 'FullscreenCamera.java', 'FrameMeasurements.java', 'RenderProfile.java'
     }
     test.java { srcDirs = ['tests'] }
 }

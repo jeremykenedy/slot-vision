@@ -31,7 +31,7 @@ public final class ReelAtriumDreamService extends DreamService {
   @Override
   protected void dump(FileDescriptor fd, PrintWriter out, String[] args) {
     super.dump(fd, out, args);
-    if (scene != null) scene.dump(out, "");
+    if (scene != null) scene.dump(out, "", args);
   }
 
   @Override

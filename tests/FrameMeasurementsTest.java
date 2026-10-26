@@ -23,5 +23,10 @@ public final class FrameMeasurementsTest {
     assertEquals(100, values.meanNanos());
     values.add(128);
     assertEquals(102, values.meanNanos());
+    values.clear();
+    assertEquals(0, values.count());
+    assertEquals(-1, values.meanNanos());
+    values.add(400);
+    assertEquals(400, values.meanNanos());
   }
 }

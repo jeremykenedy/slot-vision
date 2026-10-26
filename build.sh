@@ -75,11 +75,28 @@ for season in atrium spring summer autumn winter; do
 done
 [[ -s "$ROOT/assets/ibl/atrium_ibl.ktx" ]] || { echo "Missing lighting environment." >&2; exit 1; }
 
+PROFILE_RENDERER="${PROFILE_RENDERER:-0}"
+case "$PROFILE_RENDERER" in
+  0) PROFILE_ENABLED=false ;;
+  1) PROFILE_ENABLED=true ;;
+  *) printf 'PROFILE_RENDERER must be 0 or 1\n' >&2; exit 1 ;;
+esac
+ASSET_ROOT="$ROOT/assets"
+if [[ "$PROFILE_RENDERER" == 1 ]]; then
+  python3 "$ROOT/tools/build_profile_assets.py" "$ROOT/assets" "$OUT/profile-assets"
+  ASSET_ROOT="$OUT/profile-assets"
+fi
 "$TOOLS/aapt2" compile --dir "$ROOT/res" -o "$OUT/res.zip"
 "$TOOLS/aapt2" link -o "$OUT/unsigned.apk" -I "$ANDROID_JAR" \
   --manifest "$ROOT/AndroidManifest.xml" --min-sdk-version 23 --target-sdk-version 36 \
   --version-code "$VERSION_CODE" --version-name "$VERSION_NAME" \
-  --java "$OUT/generated" -A "$ROOT/assets" "$OUT/res.zip"
+  --java "$OUT/generated" -A "$ASSET_ROOT" "$OUT/res.zip"
+cat > "$OUT/generated/com/jeremykenedy/reelatrium/BuildConfig.java" <<EOF
+package com.jeremykenedy.reelatrium;
+public final class BuildConfig {
+  public static final boolean RENDER_DIAGNOSTICS = $PROFILE_ENABLED;
+}
+EOF
 find "$ROOT/src" "$OUT/generated" -name '*.java' > "$OUT/sources.txt"
 javac -nowarn -Xlint:-options -source 8 -target 8 -bootclasspath "$ANDROID_JAR" \
   -classpath "$CLASSPATH" -d "$OUT/classes" @"$OUT/sources.txt"

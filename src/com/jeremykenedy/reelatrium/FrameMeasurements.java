@@ -13,6 +13,11 @@ final class FrameMeasurements {
     count = Math.min(count + 1, durations.length);
   }
 
+  void clear() {
+    next = 0;
+    count = 0;
+  }
+
   int count() {
     return count;
   }

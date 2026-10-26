@@ -47,6 +47,27 @@ class ModelCompatibilityTest(unittest.TestCase):
                         fields.add(strings[field])
         self.assertFalse(expected - fields, "R8 removed fields accessed by Filament JNI: " + str(expected - fields))
 
+    def test_diagnostic_floor_variant_preserves_geometry_and_other_materials(self):
+        output = ROOT / "build/profile-assets/models"
+        if not output.exists():
+            self.skipTest("Build the local diagnostic assets for this comparison.")
+        for game in ("classic", "palace", "garden"):
+            before = (ROOT / "assets/models" / (game + "_atrium.glb")).read_bytes()
+            after = (output / (game + "_atrium_profile_unlit_floor.glb")).read_bytes()
+            original, changed = model(before), model(after)
+            floors = 0
+            for material in changed["materials"]:
+                if material.get("name", "").endswith(" woven carpet"):
+                    self.assertIn("KHR_materials_unlit", material["extensions"])
+                    del material["extensions"]["KHR_materials_unlit"]
+                    if not material["extensions"]:
+                        del material["extensions"]
+                    floors += 1
+            self.assertEqual(2, floors)
+            self.assertEqual(original, changed)
+            self.assertEqual(before[20 + struct.unpack_from("<I", before, 12)[0]:],
+                             after[20 + struct.unpack_from("<I", after, 12)[0]:])
+
     def test_nearby_floor_blends_away_before_background_furniture(self):
         raw = (ROOT / "assets/models/classic_atrium.glb").read_bytes()
         data = model(raw)

@@ -95,6 +95,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
   private final FrameMeasurements prepareCosts = new FrameMeasurements();
   private final FrameMeasurements submitCosts = new FrameMeasurements();
   private int requestedCoins;
+  private RenderProfile renderProfile = RenderProfile.BASELINE;
   private int viewportWidth;
   private int viewportHeight;
   private FullscreenCamera fullscreenCamera = new FullscreenCamera("classic", 16.0 / 9);
@@ -114,7 +115,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     camera.setExposure(11f, 1f / 125f, 100f);
     view.setScene(scene);
     view.setCamera(camera);
-    view.setPostProcessingEnabled(true);
+    view.setPostProcessingEnabled(renderProfile != RenderProfile.NO_POST);
     view.setAntiAliasing(View.AntiAliasing.FXAA);
     view.setDithering(View.Dithering.TEMPORAL);
     view.setShadowingEnabled(false);
@@ -281,7 +282,21 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     }
   }
 
-  public void dump(PrintWriter out, String prefix) {
+  public void dump(PrintWriter out, String prefix, String[] args) {
+    if (BuildConfig.RENDER_DIAGNOSTICS) {
+      try {
+        RenderProfile requested = RenderProfile.requested(args, renderProfile);
+        if (requested != renderProfile && !destroyed) {
+          renderProfile = requested;
+          loadSettings();
+          prepareCosts.clear();
+          submitCosts.clear();
+        }
+      } catch (IllegalArgumentException invalid) {
+        out.println(prefix + "Unknown render profile; no change applied");
+      }
+      out.println(prefix + "Local GPU comparison profile: " + renderProfile.id);
+    }
     out.println(prefix + "Slot renderer: " + viewportWidth + "x" + viewportHeight + ", FXAA");
     out.println(prefix + "Scene: " + (fullscreen ? "fullscreen" : casino ? "casino" : "lounge"));
     out.println(
@@ -341,16 +356,20 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     } catch (IOException error) {
       throw new IllegalStateException("The room lighting environment is missing", error);
     }
+    scene.setIndirectLight(renderProfile == RenderProfile.NO_IBL ? null : indirectLight);
     if (indirectLight != null) indirectLight.setIntensity(8000f * lighting);
     int key = engine.getLightManager().getInstance(keyEntity);
     engine.getLightManager().setIntensity(key, 16000f * lighting);
     uiHelper.setDesiredSize(1920, 1080);
-    view.setPostProcessingEnabled(true);
+    view.setPostProcessingEnabled(renderProfile != RenderProfile.NO_POST);
     updateProjection();
     roundNumber = Long.MIN_VALUE;
     reelSectors = "garden".equals(selected[0]) ? 16 : 8;
-    loadModel(
-        "models/" + (fullscreen ? "fullscreen_" : "") + selected[0] + "_atrium.glb", selected[1]);
+    String suffix =
+        renderProfile == RenderProfile.UNLIT_FLOOR && !fullscreen
+            ? "_atrium_profile_unlit_floor.glb"
+            : "_atrium.glb";
+    loadModel("models/" + (fullscreen ? "fullscreen_" : "") + selected[0] + suffix, selected[1]);
     startedNanos = System.nanoTime();
   }
 
@@ -443,6 +462,8 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
   private boolean environmentVisible(String name) {
     if (name == null) return true;
     if (name.equals("Coin_material_source")) return false;
+    if (renderProfile == RenderProfile.NO_FLOOR && name.endsWith("_Floor")) return false;
+    if (renderProfile == RenderProfile.NO_SURROUND && name.endsWith("_Surround")) return false;
     if (name.startsWith("Casino_")) return casino;
     if (name.startsWith("Lounge_")) return !casino;
     return true;
