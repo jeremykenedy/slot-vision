@@ -13,6 +13,7 @@ import com.google.android.filament.Camera;
 import com.google.android.filament.ColorGrading;
 import com.google.android.filament.Engine;
 import com.google.android.filament.EntityManager;
+import com.google.android.filament.Fence;
 import com.google.android.filament.IndirectLight;
 import com.google.android.filament.LightManager;
 import com.google.android.filament.MaterialInstance;
@@ -37,6 +38,7 @@ import com.google.android.filament.utils.Utils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Random;
@@ -59,12 +61,16 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
   private final int[] readyEntities = new int[128];
   private final int[] reelInstances = new int[5];
   private final float[][] reelRest = new float[5][16];
+  private final float[] leverRest = new float[16];
+  private int leverInstance, leverEntity, gripEntity;
+  private float leverAngle, maximumLeverAngle;
   private final float[] rotation = new float[16];
   private final float[] transform = new float[16];
   private final SharedPreferences preferences;
   private FilamentAsset asset;
   private IndirectLight indirectLight;
   private Texture environmentTexture;
+  private String lightingEnvironment;
   private Texture seasonAtlas;
   private String activeSeason;
   private int reelSectors;
@@ -89,7 +95,13 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
   private boolean destroyed;
   private boolean loading;
   private long startedNanos;
+  private Fence firstSceneFrame;
   private long lastFrameNanos;
+  private final FrameMeasurements prepareCosts = new FrameMeasurements();
+  private final FrameMeasurements submitCosts = new FrameMeasurements();
+  private int requestedCoins;
+  private int viewportWidth;
+  private int viewportHeight;
   private FullscreenCamera fullscreenCamera = new FullscreenCamera("classic", 16.0 / 9);
 
   public ReelSceneView(Context context) {
@@ -161,12 +173,14 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
           @Override
           public void onResized(int width, int height) {
             if (height == 0) return;
+            viewportWidth = width;
+            viewportHeight = height;
             view.setViewport(new Viewport(0, 0, width, height));
             viewportAspect = (double) width / height;
             updateProjection();
           }
         });
-    uiHelper.setDesiredSize(1280, 720);
+    uiHelper.setDesiredSize(1920, 1080);
     uiHelper.attachTo(this);
   }
 
@@ -218,6 +232,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     Choreographer.getInstance().postFrameCallback(this);
     if (!uiHelper.isReadyToRender() || swapChain == null) return;
     if (frameTimeNanos - lastFrameNanos < 30_000_000L) return;
+    long preparedAt = System.nanoTime();
     if (asset != null) {
       resourceLoader.asyncUpdateLoad();
       int count;
@@ -239,17 +254,30 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
           if (name != null && name.startsWith("Jackpot beacon")) beacon = material;
         }
         asset.releaseSourceData();
+        startedNanos = 0;
       }
     }
-    double seconds = (frameTimeNanos - startedNanos) * 1e-9;
+    if (firstSceneFrame != null) {
+      Fence.FenceStatus status = firstSceneFrame.wait(Fence.Mode.FLUSH, 0);
+      if (status != Fence.FenceStatus.TIMEOUT_EXPIRED) {
+        engine.destroyFence(firstSceneFrame);
+        firstSceneFrame = null;
+        if (status == Fence.FenceStatus.ERROR)
+          throw new IllegalStateException("The first cabinet frame did not finish");
+        // Let the completed scene reach the display before the first pull starts.
+        startedNanos = frameTimeNanos + 350_000_000L;
+      }
+    }
+    double seconds =
+        loading || startedNanos == 0 ? 0 : Math.max(0, frameTimeNanos - startedNanos) * 1e-9;
     animateReels(seconds);
     if (fullscreen) {
       double x = fullscreenCamera.x(seconds);
       double y = 1.035 + fullscreenCamera.y(seconds);
       camera.lookAt(x, y, 3.2, x, y, 0, 0, 1, 0);
     } else {
-      double yaw = .26 + Math.sin(seconds * .07) * (wideCamera ? .44 : .30);
-      double distance = 3.2 + Math.sin(seconds * .043) * .025;
+      double yaw = .10 + Math.sin(seconds * .055) * (wideCamera ? .32 : .20);
+      double distance = 2.90 + Math.sin(seconds * .043) * .025;
       camera.lookAt(
           Math.sin(yaw) * distance,
           1.08 + Math.sin(seconds * .051) * .025,
@@ -261,11 +289,79 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
           1,
           0);
     }
+    long submittedAt = System.nanoTime();
+    prepareCosts.add(submittedAt - preparedAt);
     if (renderer.beginFrame(swapChain, frameTimeNanos)) {
       lastFrameNanos = frameTimeNanos;
       renderer.render(view);
       renderer.endFrame();
+      if (!loading && startedNanos == 0 && firstSceneFrame == null)
+        firstSceneFrame = engine.createFence();
+      submitCosts.add(System.nanoTime() - submittedAt);
     }
+  }
+
+  public void dump(PrintWriter out, String prefix) {
+    out.println(
+        prefix
+            + "Lever entity="
+            + leverEntity
+            + " instance="
+            + leverInstance
+            + " angle="
+            + leverAngle
+            + " maximum="
+            + maximumLeverAngle);
+    if (asset != null && leverInstance != 0) {
+      TransformManager transforms = engine.getTransformManager();
+      float[] world = new float[16];
+      transforms.getWorldTransform(leverInstance, world);
+      out.println(prefix + "Lever world=" + java.util.Arrays.toString(world));
+      int grip = transforms.getInstance(gripEntity);
+      if (grip != 0) {
+        transforms.getWorldTransform(grip, world);
+        out.println(prefix + "Grip world=" + java.util.Arrays.toString(world));
+      }
+    }
+    out.println(prefix + "Slot renderer: " + viewportWidth + "x" + viewportHeight + ", FXAA");
+    out.println(prefix + "Scene: " + (fullscreen ? "fullscreen" : casino ? "casino" : "lounge"));
+    out.println(
+        prefix
+            + "Recent prepare samples="
+            + prepareCosts.count()
+            + " meanNs="
+            + prepareCosts.meanNanos());
+    out.println(
+        prefix
+            + "Recent Java/native frame-submit samples="
+            + submitCosts.count()
+            + " meanNs="
+            + submitCosts.meanNanos()
+            + " (includes any blocking)");
+    out.println(
+        prefix
+            + "Requested coin instances="
+            + requestedCoins
+            + ", instanced batches="
+            + ((requestedCoins + 63) / 64));
+    if (destroyed) {
+      out.println(prefix + "GPU timing unavailable: renderer destroyed");
+      return;
+    }
+    Renderer.FrameInfo[] history = new Renderer.FrameInfo[64];
+    for (int i = 0; i < history.length; i++) history[i] = new Renderer.FrameInfo();
+    int count = renderer.getFrameInfoHistory(history);
+    FrameMeasurements gpu = new FrameMeasurements();
+    for (int i = 0; i < Math.min(count, history.length); i++) {
+      gpu.add(history[i].gpuFrameDuration);
+    }
+    out.println(
+        prefix
+            + "Recent GPU samples="
+            + gpu.count()
+            + " meanNs="
+            + gpu.meanNanos()
+            + (gpu.count() == 0 ? " (unavailable on this backend)" : ""));
   }
 
   private void loadSettings() {
@@ -278,20 +374,25 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     speed = ReelOptions.speed(selected[2]);
     lighting = ReelOptions.light(selected[3]);
     wideCamera = "wide".equals(selected[4]);
-    if (indirectLight != null) indirectLight.setIntensity(8000f * lighting);
-    int key = engine.getLightManager().getInstance(keyEntity);
-    engine.getLightManager().setIntensity(key, 16000f * lighting);
     activeGame = selected[0];
     casino = "casino".equals(selected[5]);
     fullscreen = "fullscreen".equals(selected[6]);
-    uiHelper.setDesiredSize(1280, 720);
+    try {
+      loadLighting(fullscreen ? "atrium" : casino ? "casino" : "lounge");
+    } catch (IOException error) {
+      throw new IllegalStateException("The room lighting environment is missing", error);
+    }
+    if (indirectLight != null) indirectLight.setIntensity(8000f * lighting);
+    int key = engine.getLightManager().getInstance(keyEntity);
+    engine.getLightManager().setIntensity(key, 16000f * lighting);
+    uiHelper.setDesiredSize(1920, 1080);
     view.setPostProcessingEnabled(true);
     updateProjection();
     roundNumber = Long.MIN_VALUE;
     reelSectors = "garden".equals(selected[0]) ? 16 : 8;
     loadModel(
         "models/" + (fullscreen ? "fullscreen_" : "") + selected[0] + "_atrium.glb", selected[1]);
-    startedNanos = System.nanoTime();
+    startedNanos = 0;
   }
 
   private void updateProjection() {
@@ -316,17 +417,26 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
               engine,
               readAsset("materials/solid-surfaces.filamat"),
               readAsset("materials/solid-surfaces.json"));
-      KTX1Loader.IndirectLightBundle environment =
-          KTX1Loader.INSTANCE.createIndirectLight(
-              engine, readAsset("ibl/atrium_ibl.ktx"), new KTX1Loader.Options());
-      indirectLight = environment.getIndirectLight();
-      environmentTexture = environment.getCubemap();
-      if (indirectLight == null) throw new IllegalStateException("Invalid lighting environment");
-      indirectLight.setIntensity(8000f);
-      scene.setIndirectLight(indirectLight);
+      loadLighting("atrium");
     } catch (IOException error) {
       throw new IllegalStateException("The lighting environment is missing", error);
     }
+  }
+
+  private void loadLighting(String name) throws IOException {
+    if (name.equals(lightingEnvironment)) return;
+    KTX1Loader.IndirectLightBundle environment =
+        KTX1Loader.INSTANCE.createIndirectLight(
+            engine, readAsset("ibl/" + name + "_ibl.ktx"), new KTX1Loader.Options());
+    IndirectLight nextLight = environment.getIndirectLight();
+    if (nextLight == null) throw new IllegalStateException("Invalid lighting environment");
+    nextLight.setIntensity(8000f * lighting);
+    scene.setIndirectLight(nextLight);
+    if (indirectLight != null) engine.destroyIndirectLight(indirectLight);
+    if (environmentTexture != null) engine.destroyTexture(environmentTexture);
+    indirectLight = nextLight;
+    environmentTexture = environment.getCubemap();
+    lightingEnvironment = name;
   }
 
   private void loadModel(String filename, String season) {
@@ -347,10 +457,18 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
       reelInstances[i] = entity == 0 ? 0 : transforms.getInstance(entity);
       if (reelInstances[i] != 0) transforms.getTransform(reelInstances[i], reelRest[i]);
     }
+    leverEntity = asset.getFirstEntityByName("Lever_Pivot");
+    gripEntity = asset.getFirstEntityByName("Lever_Grip");
+    leverInstance = leverEntity == 0 ? 0 : transforms.getInstance(leverEntity);
+    if (leverInstance != 0) transforms.getTransform(leverInstance, leverRest);
     activeSeason = season;
   }
 
   private void unloadModel() {
+    if (firstSceneFrame != null) {
+      engine.destroyFence(firstSceneFrame);
+      firstSceneFrame = null;
+    }
     if (asset == null) return;
     if (coins != null) {
       coins.destroy();
@@ -381,9 +499,10 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
 
   private void animateReels(double seconds) {
     int columns = ReelOptions.columns(activeGame);
-    double duration = ReelRound.roundDuration(columns, speed);
+    double duration = LeverMotion.roundDuration(columns, speed, fullscreen);
     long round = (long) Math.floor(seconds / duration);
-    double phase = (seconds - round * duration) * speed;
+    double elapsed = seconds - round * duration;
+    double phase = LeverMotion.reelPhase(elapsed, speed, fullscreen);
     if (round != roundNumber) {
       previousRound = new ReelRound(roundSeed, round - 1, columns, ReelOptions.rows(activeGame));
       currentRound = new ReelRound(roundSeed, round, columns, ReelOptions.rows(activeGame));
@@ -391,6 +510,13 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     }
     TransformManager transforms = engine.getTransformManager();
     transforms.openLocalTransformTransaction();
+    if (leverInstance != 0) {
+      leverAngle = LeverMotion.angle(elapsed);
+      maximumLeverAngle = Math.max(maximumLeverAngle, leverAngle);
+      Matrix.setRotateM(rotation, 0, leverAngle, 1, 0, 0);
+      Matrix.multiplyMM(transform, 0, leverRest, 0, rotation, 0);
+      transforms.setTransform(leverInstance, transform);
+    }
     for (int i = 0; i < columns; i++) {
       if (reelInstances[i] == 0) continue;
       float angle =
@@ -403,6 +529,10 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     }
     transforms.commitLocalTransformTransaction();
     double celebrationAge = (phase - ReelRound.settledAt(columns)) / speed;
+    requestedCoins =
+        celebrationAge >= 0 && celebrationAge < currentRound.celebrationDuration() + 2.8
+            ? currentRound.celebrationCoinCount()
+            : 0;
     if (coins != null)
       coins.update(
           celebrationAge,

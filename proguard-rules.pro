@@ -7,3 +7,6 @@
 # Class-retained nullability annotations do not provide runtime behavior.
 -dontwarn androidx.annotation.**
 -dontwarn org.jetbrains.annotations.**
+
+# Filament frame history fills these fields through JNI rather than Java writes.
+-keepclassmembers class com.google.android.filament.Renderer$FrameInfo { <fields>; }

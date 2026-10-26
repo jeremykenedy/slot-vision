@@ -3,6 +3,8 @@ package com.jeremykenedy.reelatrium;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.View;
+import java.io.FileDescriptor;
+import java.io.PrintWriter;
 
 public final class PreviewActivity extends Activity {
   private ReelSceneView scene;
@@ -32,6 +34,12 @@ public final class PreviewActivity extends Activity {
   protected void onDestroy() {
     if (scene != null) scene.destroy();
     super.onDestroy();
+  }
+
+  @Override
+  public void dump(String prefix, FileDescriptor fd, PrintWriter out, String[] args) {
+    super.dump(prefix, fd, out, args);
+    if (scene != null) scene.dump(out, prefix);
   }
 
   @Override
