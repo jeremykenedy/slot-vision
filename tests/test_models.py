@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import struct
 import unittest
+from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = json.loads((ROOT / "tests/model-contract.json").read_text())
@@ -15,6 +16,37 @@ def model(raw):
 
 
 class ModelCompatibilityTest(unittest.TestCase):
+    def test_shrunk_apk_retains_native_frame_history_fields(self):
+        apk = ROOT / "build/slot-vision.apk"
+        if not apk.exists():
+            self.skipTest("Build the APK to check the native frame-history contract.")
+        expected = {"frameId", "gpuFrameDuration", "denoisedGpuFrameDuration", "beginFrame",
+                    "endFrame", "backendBeginFrame", "backendEndFrame", "gpuFrameComplete",
+                    "vsync", "displayPresent", "presentDeadline", "displayPresentInterval",
+                    "compositionToPresentLatency", "expectedPresentLatency", "frameScheduleTime"}
+        fields = set()
+        with ZipFile(apk) as archive:
+            for name in archive.namelist():
+                if not name.endswith(".dex"):
+                    continue
+                dex = archive.read(name)
+                count, offset = struct.unpack_from("<II", dex, 0x38)
+                strings = []
+                for i in range(count):
+                    position = struct.unpack_from("<I", dex, offset + i * 4)[0]
+                    while dex[position] & 0x80:
+                        position += 1
+                    position += 1
+                    strings.append(dex[position:dex.index(0, position)].decode("utf-8", "replace"))
+                count, offset = struct.unpack_from("<II", dex, 0x40)
+                types = [strings[struct.unpack_from("<I", dex, offset + i * 4)[0]] for i in range(count)]
+                count, offset = struct.unpack_from("<II", dex, 0x50)
+                for i in range(count):
+                    owner, _, field = struct.unpack_from("<HHI", dex, offset + i * 8)
+                    if types[owner] == "Lcom/google/android/filament/Renderer$FrameInfo;":
+                        fields.add(strings[field])
+        self.assertFalse(expected - fields, "R8 removed fields accessed by Filament JNI: " + str(expected - fields))
+
     def test_nearby_floor_blends_away_before_background_furniture(self):
         raw = (ROOT / "assets/models/classic_atrium.glb").read_bytes()
         data = model(raw)
