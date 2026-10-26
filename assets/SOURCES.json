@@ -56,21 +56,17 @@
     },
     "projection": "Artwork covers the permitted front camera arc; the animated cabinet, rotating reels, coins and contact floor remain modeled geometry.",
     "generator": "tools/rebuild_environment.py",
-    "status": "First native exposure rejected; corrected radiance and feathered physical carpet pending second native review"
+    "status": "Native room/floor motion checked; neutral HDR light correction awaiting review"
   },
   "room_reflections": {
-    "source": "Room environment artwork prefiltered with Filament cmgen 1.77.3",
-    "size": 256,
-    "samples": 128,
+    "source": "Original environment artwork with authored HDR practical-light contributions for the live geometry",
+    "generator": "tools/build_room_lighting.py",
+    "compiler": "Filament cmgen1.77.3,256px cubemap,256 samples",
+    "normalization": "Each map L00 diffuse luminance is verified within3percent of the existing studio map; the visible background artwork is unchanged",
+    "license": "Apache-2.0",
     "files": {
-      "assets/ibl/casino_ibl.ktx": "b60e1621824259dc0aea849848d54bd4b54a7e43084016ed46c2bbeb10c2b39f",
-      "assets/ibl/lounge_ibl.ktx": "1b2dbbb33136109c1c38bcf1d08c68d11047ffaf57b3ea65971a4010553a8f7f"
-    },
-    "radiance_normalization": {
-      "studio_intensity": 8000,
-      "casino_intensity": 104000,
-      "lounge_intensity": 184000,
-      "basis": "Diffuse L00 luminance relative to the existing studio environment; native exposure review pending"
+      "assets/ibl/casino_ibl.ktx": "f7302c6fe8350c9d14babf25c3b9bb2987e87922f42ba443ff97435c0aba8160",
+      "assets/ibl/lounge_ibl.ktx": "c37f260d094e36c9ddc529b5c3772aa108197e16aa0e8071062acdd1ef6ed01e"
     }
   }
 }
