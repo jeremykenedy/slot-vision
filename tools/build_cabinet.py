@@ -377,8 +377,11 @@ cylinder(
     (0, math.pi / 2, 0),
 )
 sphere("Handle pivot cap", (lever_x + 0.065, -0.02, 0.93), 0.044, cabinet)
-tube(
-    "Chrome pull lever",
+lever = bpy.data.objects.new("Lever_Pivot", None)
+bpy.context.collection.objects.link(lever)
+lever.location = (lever_x + 0.07, -0.02, 0.93)
+stem = tube(
+    "Lever_Stem",
     [
         (lever_x + 0.07, -0.02, 0.93),
         (lever_x + 0.105, -0.08, 1.02),
@@ -387,7 +390,12 @@ tube(
     0.012,
     chrome,
 )
-sphere("Polished handle grip", (lever_x + 0.105, -0.17, 1.29), 0.046, grip)
+knob = sphere("Lever_Grip", (lever_x + 0.105, -0.17, 1.29), 0.046, grip)
+bpy.context.view_layer.update()
+for part in (stem, knob):
+    world = part.matrix_world.copy()
+    part.parent = lever
+    part.matrix_world = world
 
 # Full cylinders rotate about their true axle, rather than sliding a picture behind a window.
 atlas_name = "classic" if args.game == "classic" else args.season
@@ -539,12 +547,12 @@ sphere("Beacon crown", (0, 0.02, 1.825), 0.051, beacon_mat).scale = (1, 1, 0.30)
 cylinder("Beacon silver band", (0, 0.02, 1.754), 0.053, 0.006, chrome)
 
 
-# Cabinet pieces are static; retain only reels and environment switches as separate nodes.
+# Keep the lever and reel axles separate from the static cabinet material batches.
 if not args.fullscreen:
     groups = {}
     for obj in list(bpy.data.objects):
         if (
-            obj.name.startswith(("Reel_", "Printed reel ", "Lounge_", "Casino_"))
+            obj.name.startswith(("Reel_", "Printed reel ", "Lever_", "Lounge_", "Casino_"))
             or obj.name == "Protective reel glass"
         ):
             continue

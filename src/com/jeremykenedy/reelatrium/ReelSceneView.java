@@ -60,6 +60,8 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
   private final int[] readyEntities = new int[128];
   private final int[] reelInstances = new int[5];
   private final float[][] reelRest = new float[5][16];
+  private final float[] leverRest = new float[16];
+  private int leverInstance;
   private final float[] rotation = new float[16];
   private final float[] transform = new float[16];
   private final SharedPreferences preferences;
@@ -249,9 +251,10 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
           if (name != null && name.startsWith("Jackpot beacon")) beacon = material;
         }
         asset.releaseSourceData();
+        startedNanos = frameTimeNanos;
       }
     }
-    double seconds = (frameTimeNanos - startedNanos) * 1e-9;
+    double seconds = loading ? 0 : Math.max(0, frameTimeNanos - startedNanos) * 1e-9;
     animateReels(seconds);
     if (fullscreen) {
       double x = fullscreenCamera.x(seconds);
@@ -416,6 +419,9 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
       reelInstances[i] = entity == 0 ? 0 : transforms.getInstance(entity);
       if (reelInstances[i] != 0) transforms.getTransform(reelInstances[i], reelRest[i]);
     }
+    int lever = asset.getFirstEntityByName("Lever_Pivot");
+    leverInstance = lever == 0 ? 0 : transforms.getInstance(lever);
+    if (leverInstance != 0) transforms.getTransform(leverInstance, leverRest);
     activeSeason = season;
   }
 
@@ -450,9 +456,10 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
 
   private void animateReels(double seconds) {
     int columns = ReelOptions.columns(activeGame);
-    double duration = ReelRound.roundDuration(columns, speed);
+    double duration = LeverMotion.roundDuration(columns, speed, fullscreen);
     long round = (long) Math.floor(seconds / duration);
-    double phase = (seconds - round * duration) * speed;
+    double elapsed = seconds - round * duration;
+    double phase = LeverMotion.reelPhase(elapsed, speed, fullscreen);
     if (round != roundNumber) {
       previousRound = new ReelRound(roundSeed, round - 1, columns, ReelOptions.rows(activeGame));
       currentRound = new ReelRound(roundSeed, round, columns, ReelOptions.rows(activeGame));
@@ -460,6 +467,11 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     }
     TransformManager transforms = engine.getTransformManager();
     transforms.openLocalTransformTransaction();
+    if (leverInstance != 0) {
+      Matrix.setRotateM(rotation, 0, LeverMotion.angle(elapsed), 1, 0, 0);
+      Matrix.multiplyMM(transform, 0, leverRest, 0, rotation, 0);
+      transforms.setTransform(leverInstance, transform);
+    }
     for (int i = 0; i < columns; i++) {
       if (reelInstances[i] == 0) continue;
       float angle =

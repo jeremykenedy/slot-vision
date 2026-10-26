@@ -4,17 +4,22 @@ Run in Blender. Original cabinets are read from build/cabinet-sources, leaving t
 reel axles and geometry intact. The surrounding image is scenery, never a cabinet.
 """
 
+import argparse
 import json
 import math
 from pathlib import Path
 import struct
 import subprocess
+import sys
 
 import bpy
 
 ROOT = Path(__file__).resolve().parents[1]
 EYE = (0, -3.10, 1.08)
 BASE = "38546fccb9cb8ee844107740a79a4ccde40d177b"
+parser = argparse.ArgumentParser()
+parser.add_argument("--prepared-cabinets", action="store_true")
+args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else [])
 
 
 def uv(point):
@@ -139,8 +144,12 @@ for game in ("classic", "palace", "garden"):
     source = ROOT / "build/cabinet-sources" / (game + "_atrium.glb")
     source.parent.mkdir(parents=True, exist_ok=True)
     # Rebuild from the pinned cabinet, not a previously projected output.
-    source.write_bytes(subprocess.check_output(
-        ["git", "show", BASE + ":assets/models/" + source.name], cwd=ROOT))
+    if args.prepared_cabinets:
+        if not source.is_file():
+            raise FileNotFoundError("Build the articulated cabinet first: " + str(source))
+    else:
+        source.write_bytes(subprocess.check_output(
+            ["git", "show", BASE + ":assets/models/" + source.name], cwd=ROOT))
     bpy.ops.import_scene.gltf(filepath=str(source))
     for obj in list(bpy.data.objects):
         if obj.name.startswith("Lounge_Contact shadow"):

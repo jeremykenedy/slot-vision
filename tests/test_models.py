@@ -16,6 +16,16 @@ def model(raw):
 
 
 class ModelCompatibilityTest(unittest.TestCase):
+    def test_each_cabinet_has_a_separate_lever_parent(self):
+        for game in ("classic", "palace", "garden"):
+            data = model((ROOT / "assets/models" / (game + "_atrium.glb")).read_bytes())
+            pivot = next(node for node in data["nodes"] if node.get("name") == "Lever_Pivot")
+            children = [data["nodes"][index] for index in pivot["children"]]
+            self.assertEqual({"Lever_Grip", "Lever_Stem"}, {node["name"] for node in children})
+            self.assertTrue(all("mesh" in node for node in children))
+            self.assertNotIn("mesh", pivot)
+            self.assertAlmostEqual(.93, pivot["translation"][1], places=5)
+
     def test_shrunk_apk_retains_native_frame_history_fields(self):
         apk = ROOT / "build/slot-vision.apk"
         if not apk.exists():
