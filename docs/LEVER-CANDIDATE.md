@@ -49,3 +49,23 @@ first reel movement, full return, repeated spins, all games/seasons, fullscreen,
 coins/beacon and lifecycle. Compare code 15 with the public renderer separately
 from the held casino/floor experiments. No release, host integration or device
 compatibility beyond the existing public evidence is established by this build.
+
+## Render submission follow-up
+
+A follow-up from draft head `4c0d28e` keeps the same cabinet assets, camera motion,
+lighting, 1080p surface, postprocessing, coin effects and lever/reel timelines.
+Filament must accept a frame before that frame's pose and camera submissions run.
+Already submitted lever/reel angles and beacon intensity are reused only when the
+float values are exactly equal; every new model clears the cache, including its
+initial rest pose. Upload polling continues until loading is complete and every
+renderable has been popped, including hidden room and material-source entities.
+Diagnostic dumps report accepted/rejected frames and native submission counts.
+
+Tests compare the emitted angles and beacon values with the original motion for
+all games and speeds, both scene modes, round transitions and skipped timestamps.
+They also check rest plateaus, tiny changes and model cache resets. These checks
+establish fewer redundant submissions without changing those tested values.
+They do not establish a higher physical presentation rate. The original code 15
+1080p physical window remains about 20.25 FPS, below the 28 FPS acceptance gate;
+this candidate remains private and the draft release stays held pending fresh
+authorized physical acceptance.

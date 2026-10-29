@@ -67,6 +67,9 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
   private int viewportWidth, viewportHeight, requestedCoins;
   private final float[] rotation = new float[16];
   private final float[] transform = new float[16];
+  private final FrameChanges frameChanges = new FrameChanges();
+  private int pendingRenderables;
+  private long acceptedFrames, rejectedFrames, transformSubmissions, beaconSubmissions, uploadPolls;
   private final SharedPreferences preferences;
   private FilamentAsset asset;
   private IndirectLight indirectLight;
@@ -227,10 +230,12 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     Choreographer.getInstance().postFrameCallback(this);
     if (!uiHelper.isReadyToRender() || swapChain == null) return;
     if (frameTimeNanos - lastFrameNanos < 30_000_000L) return;
-    if (asset != null) {
+    if (asset != null && (loading || pendingRenderables > 0)) {
+      uploadPolls++;
       resourceLoader.asyncUpdateLoad();
       int count;
       while ((count = asset.popRenderables(readyEntities)) > 0) {
+        pendingRenderables -= count;
         for (int i = 0; i < count; i++) {
           if (!"Protective reel glass".equals(asset.getName(readyEntities[i])))
             if (environmentVisible(asset.getName(readyEntities[i])))
@@ -262,6 +267,12 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
         startedNanos = frameTimeNanos + 350_000_000L;
       }
     }
+    if (!renderer.beginFrame(swapChain, frameTimeNanos)) {
+      rejectedFrames++;
+      return;
+    }
+    acceptedFrames++;
+    lastFrameNanos = frameTimeNanos;
     double seconds =
         loading || startedNanos == 0 ? 0 : Math.max(0, frameTimeNanos - startedNanos) * 1e-9;
     animateReels(seconds);
@@ -283,13 +294,10 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
           1,
           0);
     }
-    if (renderer.beginFrame(swapChain, frameTimeNanos)) {
-      lastFrameNanos = frameTimeNanos;
-      renderer.render(view);
-      renderer.endFrame();
-      if (!loading && startedNanos == 0 && firstSceneFrame == null)
-        firstSceneFrame = engine.createFence();
-    }
+    renderer.render(view);
+    renderer.endFrame();
+    if (!loading && startedNanos == 0 && firstSceneFrame == null)
+      firstSceneFrame = engine.createFence();
   }
 
   public void dump(PrintWriter out, String prefix) {
@@ -317,6 +325,22 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     out.println(prefix + "Slot renderer: " + viewportWidth + "x" + viewportHeight + ", FXAA");
     out.println(prefix + "Scene: " + (fullscreen ? "fullscreen" : casino ? "casino" : "lounge"));
     out.println(prefix + "Requested coin instances=" + requestedCoins + ", round=" + roundNumber);
+    out.println(
+        prefix
+            + "Submissions: accepted="
+            + acceptedFrames
+            + " rejected="
+            + rejectedFrames
+            + " transforms="
+            + transformSubmissions
+            + " beacon="
+            + beaconSubmissions
+            + " uploads="
+            + uploadPolls
+            + " pendingRenderables="
+            + pendingRenderables
+            + " loading="
+            + loading);
   }
 
   private void loadSettings() {
@@ -390,6 +414,8 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
     if (asset == null) throw new IllegalStateException("Invalid cabinet model: " + filename);
     if (asset.getResourceUris().length != 0)
       throw new IllegalStateException("Cabinet resources must be embedded");
+    pendingRenderables = asset.getRenderableEntities().length;
+    frameChanges.reset();
     loading = resourceLoader.asyncBeginLoad(asset);
     if (!loading) throw new IllegalStateException("Could not load cabinet resources");
     TransformManager transforms = engine.getTransformManager();
@@ -428,6 +454,7 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
       seasonAtlas = null;
     }
     loading = false;
+    pendingRenderables = 0;
   }
 
   private boolean environmentVisible(String name) {
@@ -450,13 +477,18 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
       roundNumber = round;
     }
     TransformManager transforms = engine.getTransformManager();
-    transforms.openLocalTransformTransaction();
+    boolean transactionOpen = false;
     if (leverInstance != 0) {
       leverAngle = LeverMotion.angle(elapsed);
       maximumLeverAngle = Math.max(maximumLeverAngle, leverAngle);
-      Matrix.setRotateM(rotation, 0, leverAngle, 1, 0, 0);
-      Matrix.multiplyMM(transform, 0, leverRest, 0, rotation, 0);
-      transforms.setTransform(leverInstance, transform);
+      if (frameChanges.lever(leverAngle)) {
+        transforms.openLocalTransformTransaction();
+        transactionOpen = true;
+        Matrix.setRotateM(rotation, 0, leverAngle, 1, 0, 0);
+        Matrix.multiplyMM(transform, 0, leverRest, 0, rotation, 0);
+        transforms.setTransform(leverInstance, transform);
+        transformSubmissions++;
+      }
     }
     for (int i = 0; i < columns; i++) {
       if (reelInstances[i] == 0) continue;
@@ -464,11 +496,17 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
           (float)
               ((currentRound.position(previousRound, phase, i) % reelSectors)
                   * (360.0 / reelSectors));
+      if (!frameChanges.reel(i, angle)) continue;
+      if (!transactionOpen) {
+        transforms.openLocalTransformTransaction();
+        transactionOpen = true;
+      }
       Matrix.setRotateM(rotation, 0, angle, 1, 0, 0);
       Matrix.multiplyMM(transform, 0, reelRest[i], 0, rotation, 0);
       transforms.setTransform(reelInstances[i], transform);
+      transformSubmissions++;
     }
-    transforms.commitLocalTransformTransaction();
+    if (transactionOpen) transforms.commitLocalTransformTransaction();
     double celebrationAge = (phase - ReelRound.settledAt(columns)) / speed;
     requestedCoins =
         celebrationAge >= 0 && celebrationAge < currentRound.celebrationDuration() + 2.8
@@ -486,7 +524,10 @@ public final class ReelSceneView extends SurfaceView implements Choreographer.Fr
           currentRound.jackpot() && celebrationAge >= 0 && celebrationAge < 10
               ? Math.max(0f, (float) Math.sin(celebrationAge * 9))
               : 0f;
-      beacon.setParameter("emissiveFactor", pulse * 12f, pulse * .04f, pulse * .01f);
+      if (frameChanges.beacon(pulse)) {
+        beacon.setParameter("emissiveFactor", pulse * 12f, pulse * .04f, pulse * .01f);
+        beaconSubmissions++;
+      }
     }
   }
 
